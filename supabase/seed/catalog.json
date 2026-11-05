@@ -1,0 +1,681 @@
+{
+  "categories": [
+    {
+      "slug": "smartphones",
+      "name": "Smartphones",
+      "sort_order": 0
+    },
+    {
+      "slug": "feature-phones",
+      "name": "Feature phones",
+      "sort_order": 1
+    },
+    {
+      "slug": "smart-tvs",
+      "name": "Smart TVs",
+      "sort_order": 2
+    },
+    {
+      "slug": "fridges",
+      "name": "Fridges",
+      "sort_order": 3
+    },
+    {
+      "slug": "kitchen",
+      "name": "Kitchen",
+      "sort_order": 4
+    },
+    {
+      "slug": "home-appliances",
+      "name": "Home appliances",
+      "sort_order": 5
+    },
+    {
+      "slug": "cctv-and-security",
+      "name": "CCTV & security",
+      "sort_order": 6
+    },
+    {
+      "slug": "audio",
+      "name": "Audio",
+      "sort_order": 7
+    },
+    {
+      "slug": "chargers-and-cables",
+      "name": "Chargers & cables",
+      "sort_order": 8
+    },
+    {
+      "slug": "networking",
+      "name": "Networking",
+      "sort_order": 9
+    },
+    {
+      "slug": "lighting",
+      "name": "Lighting",
+      "sort_order": 10
+    },
+    {
+      "slug": "tv-wall-mounts",
+      "name": "TV wall mounts",
+      "sort_order": 11
+    },
+    {
+      "slug": "personal-care",
+      "name": "Personal care",
+      "sort_order": 12
+    }
+  ],
+  "products": [
+    {
+      "key": "s26",
+      "slug": "samsung-galaxy-s26-ultra-8gb-256gb",
+      "name": "Samsung Galaxy S26 Ultra 8GB / 256GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 123000,
+      "warranty": "24-month warranty",
+      "badge": "New"
+    },
+    {
+      "key": "s25",
+      "slug": "samsung-galaxy-s25-ultra-256gb",
+      "name": "Samsung Galaxy S25 Ultra 256GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 118000,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "a57",
+      "slug": "samsung-galaxy-a57-5g-8gb-256gb",
+      "name": "Samsung Galaxy A57 5G 8GB / 256GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 53000,
+      "warranty": "2-year warranty",
+      "badge": "New"
+    },
+    {
+      "key": "a56",
+      "slug": "samsung-galaxy-a56-5g-8gb-256gb",
+      "name": "Samsung Galaxy A56 5G 8GB / 256GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 46500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "a26",
+      "slug": "samsung-galaxy-a26-5g-8gb-256gb",
+      "name": "Samsung Galaxy A26 5G 8GB / 256GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 34000,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "a17",
+      "slug": "samsung-galaxy-a17-4gb-128gb",
+      "name": "Samsung Galaxy A17 4GB / 128GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 22500,
+      "warranty": "24-month warranty",
+      "badge": "New"
+    },
+    {
+      "key": "a16",
+      "slug": "samsung-galaxy-a16-4gb-128gb",
+      "name": "Samsung Galaxy A16 4GB / 128GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 19800,
+      "warranty": "24-month warranty",
+      "badge": null
+    },
+    {
+      "key": "a07",
+      "slug": "samsung-galaxy-a07-4gb-128gb",
+      "name": "Samsung Galaxy A07 4GB / 128GB",
+      "brand": "Samsung",
+      "category": "Smartphones",
+      "price_kes": 18500,
+      "warranty": "24-month warranty",
+      "badge": null
+    },
+    {
+      "key": "k18",
+      "slug": "kgtel-k18-pro-max-64gb",
+      "name": "KGTEL K18 Pro Max 64GB",
+      "brand": "KGTEL",
+      "category": "Smartphones",
+      "price_kes": 12500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "k26",
+      "slug": "kgtel-k26-ultra-64gb",
+      "name": "KGTEL K26 Ultra 64GB",
+      "brand": "KGTEL",
+      "category": "Smartphones",
+      "price_kes": 12500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "nokia",
+      "slug": "nokia-105-4g-dual-sim",
+      "name": "Nokia 105 4G Dual SIM",
+      "brand": "Nokia",
+      "category": "Feature phones",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "itel",
+      "slug": "itel-2160-dual-sim-wireless-fm",
+      "name": "itel 2160 Dual SIM, Wireless FM",
+      "brand": "itel",
+      "category": "Feature phones",
+      "price_kes": 1700,
+      "warranty": "24-month warranty",
+      "badge": null
+    },
+    {
+      "key": "tecno528",
+      "slug": "tecno-t528-dual-sim",
+      "name": "Tecno T528 Dual SIM",
+      "brand": "Tecno",
+      "category": "Feature phones",
+      "price_kes": 2500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "bontel",
+      "slug": "bontel-3310-plus-dual-sim",
+      "name": "Bontel 3310 Plus Dual SIM",
+      "brand": "Bontel",
+      "category": "Feature phones",
+      "price_kes": null,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "momofly",
+      "slug": "momofly-m310e-triple-sim",
+      "name": "Momofly M310E Triple SIM",
+      "brand": "Momofly",
+      "category": "Feature phones",
+      "price_kes": 1300,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "oking",
+      "slug": "oking-ok302-dual-sim",
+      "name": "Oking OK302 Dual SIM",
+      "brand": "Oking",
+      "category": "Feature phones",
+      "price_kes": 1350,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "hisense55",
+      "slug": "hisense-55-inch-a6q-4k-uhd-vidaa-smart-tv",
+      "name": "Hisense 55\" A6Q 4K UHD VIDAA Smart TV",
+      "brand": "Hisense",
+      "category": "Smart TVs",
+      "price_kes": 41500,
+      "warranty": "2-year warranty",
+      "badge": null
+    },
+    {
+      "key": "tcl55",
+      "slug": "tcl-55-inch-v6d-4k-google-tv",
+      "name": "TCL 55\" V6D 4K Google TV",
+      "brand": "TCL",
+      "category": "Smart TVs",
+      "price_kes": 42500,
+      "warranty": null,
+      "badge": "New"
+    },
+    {
+      "key": "tcl50",
+      "slug": "tcl-50-inch-v6d-4k-google-tv",
+      "name": "TCL 50\" V6D 4K Google TV",
+      "brand": "TCL",
+      "category": "Smart TVs",
+      "price_kes": 34500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "tcl43",
+      "slug": "tcl-43-inch-s5k-qled-google-tv",
+      "name": "TCL 43\" S5K QLED Google TV",
+      "brand": "TCL",
+      "category": "Smart TVs",
+      "price_kes": 28000,
+      "warranty": "1-year warranty",
+      "badge": null
+    },
+    {
+      "key": "lg234",
+      "slug": "lg-234l-top-freezer-fridge",
+      "name": "LG 234L Top Freezer Fridge",
+      "brand": "LG",
+      "category": "Fridges",
+      "price_kes": 59000,
+      "warranty": "10-year warranty",
+      "badge": null
+    },
+    {
+      "key": "hisense203",
+      "slug": "hisense-203l-double-door-fridge",
+      "name": "Hisense 203L Double Door Fridge",
+      "brand": "Hisense",
+      "category": "Fridges",
+      "price_kes": 44500,
+      "warranty": "10-year warranty",
+      "badge": null
+    },
+    {
+      "key": "hisense154",
+      "slug": "hisense-154l-double-door-fridge",
+      "name": "Hisense 154L Double Door Fridge",
+      "brand": "Hisense",
+      "category": "Fridges",
+      "price_kes": 32500,
+      "warranty": "5-year warranty",
+      "badge": null
+    },
+    {
+      "key": "airfryer",
+      "slug": "smart-pro-air-fryer-6l-saf-232b",
+      "name": "Smart Pro Air Fryer 6L SAF-232B",
+      "brand": "Smart Pro",
+      "category": "Kitchen",
+      "price_kes": 6300,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "kettle",
+      "slug": "eurochef-2l-electric-kettle-ec-k12",
+      "name": "Eurochef 2L Electric Kettle EC-K12",
+      "brand": "Eurochef",
+      "category": "Kitchen",
+      "price_kes": 1300,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "kettle2",
+      "slug": "eurochef-ecology-2l-kettle-1500w",
+      "name": "Eurochef Ecology 2L Kettle, 1500W",
+      "brand": "Eurochef",
+      "category": "Kitchen",
+      "price_kes": null,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "dispenser",
+      "slug": "sonar-b7c-3-tap-water-dispenser",
+      "name": "Sonar B7C 3-Tap Water Dispenser",
+      "brand": "Sonar",
+      "category": "Kitchen",
+      "price_kes": 4400,
+      "warranty": "1-year warranty",
+      "badge": null
+    },
+    {
+      "key": "philipsiron",
+      "slug": "philips-hd1172-dry-iron",
+      "name": "Philips HD1172 Dry Iron",
+      "brand": "Philips",
+      "category": "Home appliances",
+      "price_kes": 3200,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "starworth",
+      "slug": "starworth-1000w-dry-iron",
+      "name": "Starworth 1000W Dry Iron",
+      "brand": "Starworth",
+      "category": "Home appliances",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "dahuacube",
+      "slug": "dahua-cube-a1-3mp-wi-fi-camera",
+      "name": "Dahua Cube A1 3MP Wi-Fi Camera",
+      "brand": "Dahua",
+      "category": "CCTV & security",
+      "price_kes": 2950,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "imoucue",
+      "slug": "imou-cue-2-3mp-wi-fi-camera",
+      "name": "Imou Cue 2 3MP Wi-Fi Camera",
+      "brand": "Imou",
+      "category": "CCTV & security",
+      "price_kes": 3500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "dahuadvr",
+      "slug": "dahua-4-channel-wizsense-dvr",
+      "name": "Dahua 4-Channel WizSense DVR",
+      "brand": "Dahua",
+      "category": "CCTV & security",
+      "price_kes": 4400,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "dahuabullet",
+      "slug": "dahua-2mp-dual-light-bullet-camera",
+      "name": "Dahua 2MP Dual Light Bullet Camera",
+      "brand": "Dahua",
+      "category": "CCTV & security",
+      "price_kes": 2250,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "dahuaeyeball",
+      "slug": "dahua-2mp-dual-light-eyeball-camera",
+      "name": "Dahua 2MP Dual Light Eyeball Camera",
+      "brand": "Dahua",
+      "category": "CCTV & security",
+      "price_kes": 2250,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speakerf226",
+      "slug": "h-and-f-hf-f226-wireless-speaker",
+      "name": "H&F HF-F226 Wireless Speaker",
+      "brand": "H&F",
+      "category": "Audio",
+      "price_kes": 2100,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speakerc15",
+      "slug": "portable-speaker-c15",
+      "name": "Portable Speaker C15",
+      "brand": null,
+      "category": "Audio",
+      "price_kes": 1800,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speakerfl09",
+      "slug": "h-and-f-fl09-party-box-speaker",
+      "name": "H&F FL09 Party Box Speaker",
+      "brand": "H&F",
+      "category": "Audio",
+      "price_kes": 1700,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speaker898",
+      "slug": "portable-speaker-898",
+      "name": "Portable Speaker 898",
+      "brand": null,
+      "category": "Audio",
+      "price_kes": 1800,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speakergu221",
+      "slug": "wireless-speaker-gu-221",
+      "name": "Wireless Speaker GU-221",
+      "brand": null,
+      "category": "Audio",
+      "price_kes": 850,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "speakergu195",
+      "slug": "wireless-speaker-gu-195",
+      "name": "Wireless Speaker GU-195",
+      "brand": null,
+      "category": "Audio",
+      "price_kes": 900,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "radio",
+      "slug": "rsdo-rd-097ubt-s-solar-radio",
+      "name": "Rsdo RD-097UBT-S Solar Radio",
+      "brand": "Rsdo",
+      "category": "Audio",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "charger35w",
+      "slug": "35w-usb-c-charger-2m-cable",
+      "name": "35W USB-C Charger + 2m Cable",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "charger25w",
+      "slug": "25w-usb-c-wall-charger",
+      "name": "25W USB-C Wall Charger",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 1300,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "carcharger",
+      "slug": "usb-c-car-charger-22-5w",
+      "name": "USB-C Car Charger 22.5W",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 700,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "hp65w",
+      "slug": "hp-65w-usb-c-laptop-charger",
+      "name": "HP 65W USB-C Laptop Charger",
+      "brand": "HP",
+      "category": "Chargers & cables",
+      "price_kes": 2300,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "hpbluepin",
+      "slug": "hp-65w-blue-pin-charger-19-5v",
+      "name": "HP 65W Blue Pin Charger 19.5V",
+      "brand": "HP",
+      "category": "Chargers & cables",
+      "price_kes": 1700,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "laptopcable",
+      "slug": "laptop-power-cable-1-5m",
+      "name": "Laptop Power Cable 1.5m",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 200,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "hdmi15",
+      "slug": "hdmi-cable-1-5m-high-speed",
+      "name": "HDMI Cable 1.5m High Speed",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 400,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "hdmi3",
+      "slug": "hdmi-cable-3m-4k",
+      "name": "HDMI Cable 3m 4K",
+      "brand": null,
+      "category": "Chargers & cables",
+      "price_kes": 550,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "router",
+      "slug": "tenda-tx2-pro-wi-fi-6-router",
+      "name": "Tenda TX2 Pro Wi-Fi 6 Router",
+      "brand": "Tenda",
+      "category": "Networking",
+      "price_kes": 5000,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "ringlight18",
+      "slug": "18-inch-led-ring-light-kit",
+      "name": "18\" LED Ring Light Kit",
+      "brand": null,
+      "category": "Lighting",
+      "price_kes": 3350,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "ringlight10",
+      "slug": "10-inch-ring-fill-light-stand",
+      "name": "10\" Ring Fill Light + Stand",
+      "brand": null,
+      "category": "Lighting",
+      "price_kes": 1350,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "ringlight14",
+      "slug": "14-inch-ring-fill-light-qx-360",
+      "name": "14\" Ring Fill Light QX-360",
+      "brand": null,
+      "category": "Lighting",
+      "price_kes": 2500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount42t",
+      "slug": "tilting-tv-mount-sh-42t-15-inch-55-inch",
+      "name": "Tilting TV Mount SH 42T, 15\"–55\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": 1150,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount20t",
+      "slug": "tilting-tv-mount-sh-20t-15-inch-43-inch",
+      "name": "Tilting TV Mount SH 20T, 15\"–43\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": 800,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount44t",
+      "slug": "tilting-tv-mount-sh-44t-24-inch-65-inch",
+      "name": "Tilting TV Mount SH 44T, 24\"–65\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount63t",
+      "slug": "tilting-tv-mount-sh-63t-32-inch-85-inch",
+      "name": "Tilting TV Mount SH 63T, 32\"–85\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": null,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount35p",
+      "slug": "swivel-tv-mount-sh-35p-24-inch-55-inch",
+      "name": "Swivel TV Mount SH 35P, 24\"–55\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": 1500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "mount75p",
+      "slug": "swivel-tv-mount-sh-75p-32-inch-85-inch",
+      "name": "Swivel TV Mount SH 75P, 32\"–85\"",
+      "brand": "Skill Tech",
+      "category": "TV wall mounts",
+      "price_kes": 2800,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "clippergeemy",
+      "slug": "geemy-gm-6008-hair-clipper",
+      "name": "Geemy GM-6008 Hair Clipper",
+      "brand": "Geemy",
+      "category": "Personal care",
+      "price_kes": 2500,
+      "warranty": null,
+      "badge": null
+    },
+    {
+      "key": "clipperwaikil",
+      "slug": "waikil-professional-hair-clipper",
+      "name": "Waikil Professional Hair Clipper",
+      "brand": "Waikil",
+      "category": "Personal care",
+      "price_kes": 2500,
+      "warranty": null,
+      "badge": null
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Sky254 design tokens, matching the "Sky / Sunset" palette on the design canvas.
+   To change the brand colours, edit these values only. */
+@theme inline {
+  --color-brand: #0669d6;
+  --color-brand-dark: #0453ab;
+  --color-tint: #eef4fc;
+  --color-ink: #0b1b33;
+  --color-accent: #ffb020;
+  --color-text: #1d2128;
+  --color-muted: #6b7280;
+  --color-line: #e6e9f0;
+
+  --font-sans: var(--font-rubik);
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-text);
+}
