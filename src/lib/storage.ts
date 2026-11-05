@@ -41,14 +41,34 @@ async function shrinkImage(file: File): Promise<File> {
   // Browsers without a WebP encoder silently return PNG, so fall back to JPEG.
   let blob = await toBlob("image/webp");
   if (!blob || blob.type !== "image/webp") blob = await toBlob("image/jpeg");
-  if (!blob || blob.size >= file.size) return file;
+  if (!blob) return file;
+  // A small photo that's already well compressed can stay as it is. Anything
+  // too large always uses the resized copy.
+  if (scale === 1 && blob.size >= file.size) return file;
 
   const ext = blob.type === "image/webp" ? "webp" : "jpg";
   return new File([blob], file.name.replace(/\.[^.]*$/, "") + "." + ext, { type: blob.type });
 }
 
-/** Compresses and uploads one image from the browser. Returns its storage path. */
-export async function uploadProductImage(supabase: SupabaseClient, original: File, folder: string) {
+async function measure(file: File) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return size;
+  } catch {
+    return { width: 0, height: 0 };
+  }
+}
+
+export type UploadedImage = { path: string; width: number; height: number; bytes: number };
+
+/** Compresses and uploads one image from the browser. */
+export async function uploadProductImage(
+  supabase: SupabaseClient,
+  original: File,
+  folder: string,
+): Promise<UploadedImage> {
   if (!ACCEPTED_IMAGE_TYPES.includes(original.type)) {
     throw new Error("Please choose a JPG, PNG, WebP or AVIF image.");
   }
@@ -63,7 +83,8 @@ export async function uploadProductImage(supabase: SupabaseClient, original: Fil
     .from(PRODUCTS_BUCKET)
     .upload(path, file, { cacheControl: "31536000", contentType: file.type, upsert: false });
   if (error) throw new Error(error.message);
-  return path;
+
+  return { path, bytes: file.size, ...(await measure(file)) };
 }
 
 /** Public URL for a path stored in product_images.storage_path. */

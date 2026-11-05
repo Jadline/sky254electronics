@@ -21,7 +21,7 @@ begin
     -- All products were loaded at once, so give New arrivals a real order.
     update public.products set created_at = '2026-11-01 08:00:00+00';
     update public.products p
-    set created_at = '2026-11-05 08:00:00+00'::timestamptz - (v.position * interval '1 minute')
+    set created_at = '2026-11-04 08:00:00+00'::timestamptz - (v.position * interval '1 minute')
     from (values
       ('samsung-galaxy-s26-ultra-8gb-256gb', 1), ('samsung-galaxy-a57-5g-8gb-256gb', 2),
       ('samsung-galaxy-a17-4gb-128gb', 3), ('tcl-55-inch-v6d-4k-google-tv', 4),

@@ -9,6 +9,11 @@ export type Product = {
   warranty: string | null;
   badge: string | null;
   description: string | null;
+  /** Shorter title for the Home page slider and banners. */
+  shortName: string | null;
+  isFeatured: boolean;
+  showInHero: boolean;
+  showInBanner: boolean;
   inStock: boolean;
   /** The product on its own. Missing when we only have a box photo. */
   photo: ProductPhoto | null;

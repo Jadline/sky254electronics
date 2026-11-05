@@ -27,6 +27,10 @@ type ProductRow = {
   warranty: string | null;
   badge: string | null;
   description: string | null;
+  short_name: string | null;
+  is_featured: boolean;
+  show_in_hero: boolean;
+  show_in_banner: boolean;
   in_stock: boolean;
   categories: Category;
   product_images: ImageRow[];
@@ -45,9 +49,10 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await publicClient()
     .from("products")
     .select(
-      "slug, name, brand, price_kes, warranty, badge, description, in_stock, categories(slug, name), product_images(kind, storage_path, alt)",
+      "slug, name, brand, price_kes, warranty, badge, description, short_name, is_featured, show_in_hero, show_in_banner, in_stock, categories(slug, name), product_images(kind, storage_path, alt)",
     )
-    .order("created_at");
+    .order("created_at", { ascending: false })
+    .order("name");
   if (error) throw new Error(`Couldn't load products: ${error.message}`);
 
   return (data as unknown as ProductRow[]).map((row) => ({
@@ -59,6 +64,10 @@ export async function getProducts(): Promise<Product[]> {
     warranty: row.warranty,
     badge: row.badge,
     description: row.description,
+    shortName: row.short_name,
+    isFeatured: row.is_featured,
+    showInHero: row.show_in_hero,
+    showInBanner: row.show_in_banner,
     inStock: row.in_stock,
     photo: photoOf(row, "product"),
     boxPhoto: photoOf(row, "box"),

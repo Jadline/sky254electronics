@@ -42,6 +42,18 @@ Products live in Supabase, and photos live in the `products` Storage bucket as `
 
 `npm run seed` loads `supabase/seed/catalog.json` and the compressed photos in `supabase/seed/images/`. The photos aren't in Git, so this only works on a machine that has them. It's safe to re-run: products already in the database keep their current details, but photos are re-uploaded.
 
+## Admin dashboard
+
+The dashboard is at `/admin`. To give someone access, run:
+
+```bash
+npm run create-admin -- their@email.com
+```
+
+New accounts get a temporary password, shown once in the terminal. Change it under Account after signing in.
+
+Access is checked on every admin page and action, and the database enforces it too (`supabase/migrations`). Photos uploaded in the dashboard are compressed to WebP in the browser before they're stored.
+
 ## Before launch
 
 Some product photos came from retailer and manufacturer websites and are placeholders for development. Replace them with images you have permission to use, such as official images from your distributors.
