@@ -79,6 +79,8 @@ export default async function Home() {
   const bySlug = new Map(products.map((product) => [product.slug, product]));
   // Anything hidden or removed in the database simply drops out of the page.
   const pick = (slugs: string[]) => slugs.flatMap((slug) => bySlug.get(slug) ?? []);
+  // Links to a category only appear while it has something in stock.
+  const hasStock = (slug: string) => categories.some((c) => c.slug === slug);
   const categoryName = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? slug;
 
   const cheapest = (slug: string) => {
@@ -152,7 +154,7 @@ export default async function Home() {
         <div className="flex min-w-0 flex-[999_1_640px] flex-wrap gap-5">
           <HeroSlider slides={slides} />
           <div className="grid min-w-0 flex-[1_1_400px] grid-cols-2 gap-5">
-            {tiles.map((tile) => {
+            {tiles.filter((tile) => hasStock(tile.category)).map((tile) => {
               const image = bySlug.get(tile.slug)?.photo;
               return (
                 <Link
@@ -193,7 +195,7 @@ export default async function Home() {
         <div className="flex min-w-0 flex-[999_1_600px] flex-col gap-[22px]">
           <SectionTitle>Top categories</SectionTitle>
           <div className="cat6 grid gap-5">
-            {topCategories.map((item) => {
+            {topCategories.filter((item) => hasStock(item.slug)).map((item) => {
               const image = bySlug.get(item.product)?.photo;
               return (
                 <Link
@@ -280,7 +282,7 @@ export default async function Home() {
           <div className="flex flex-wrap items-center justify-between gap-x-[30px] gap-y-3 border-b border-line pb-3.5">
             <h2 className="text-base font-medium">{section.title}</h2>
             <div className="flex flex-wrap gap-[26px] text-[13px]">
-              {section.categories.map((slug) => (
+              {section.categories.filter(hasStock).map((slug) => (
                 <Link key={slug} href={categoryHref(slug)} className="text-muted transition-colors hover:text-brand">
                   {categoryName(slug)}
                 </Link>

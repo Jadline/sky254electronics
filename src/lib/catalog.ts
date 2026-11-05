@@ -58,15 +58,17 @@ export async function getProducts(): Promise<Product[]> {
   }));
 }
 
+/** Only categories with at least one visible, in-stock product. */
 export async function getCategories(): Promise<Category[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
   cacheTag("catalog");
 
   const { data, error } = await publicClient()
     .from("categories")
-    .select("slug, name")
+    .select("slug, name, products!inner(id)")
+    .eq("products.in_stock", true)
     .order("sort_order");
   if (error) throw new Error(`Couldn't load categories: ${error.message}`);
-  return data;
+  return data.map(({ slug, name }) => ({ slug, name }));
 }

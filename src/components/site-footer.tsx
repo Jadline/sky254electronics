@@ -1,22 +1,11 @@
 import Link from "next/link";
 import { site, whatsappLink } from "@/config/site";
+import { getCategories } from "@/lib/catalog";
 import { categoryHref } from "@/lib/types";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ChatIcon, ChevronUpIcon } from "@/components/icons";
 
 const COLUMNS = [
-  {
-    title: "Find it fast",
-    links: [
-      ["Smartphones", categoryHref("smartphones")],
-      ["Feature phones", categoryHref("feature-phones")],
-      ["Smart TVs", categoryHref("smart-tvs")],
-      ["Fridges", categoryHref("fridges")],
-      ["CCTV & security", categoryHref("cctv-and-security")],
-      ["Speakers & radios", categoryHref("audio")],
-      ["Chargers & cables", categoryHref("chargers-and-cables")],
-    ],
-  },
   {
     title: "Information",
     links: [
@@ -47,7 +36,15 @@ const PAYMENTS = [
   { label: "Cash on delivery", className: "font-medium text-text" },
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const categories = await getCategories();
+  const columns = [
+    {
+      title: "Find it fast",
+      links: categories.slice(0, 7).map((category) => [category.name, categoryHref(category.slug)]),
+    },
+    ...COLUMNS,
+  ];
   const whatsapp = whatsappLink("Hi Sky254!");
   const social = [
     { label: "Facebook", href: site.social.facebook, text: "f" },
@@ -80,7 +77,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {COLUMNS.map((column) => (
+        {columns.map((column) => (
           <div key={column.title} className="flex flex-[1_1_170px] flex-col gap-3.5 text-sm">
             <h2 className="mt-2.5 mb-3 text-base font-medium">{column.title}</h2>
             {column.links.map(([label, href]) => (

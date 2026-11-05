@@ -6,10 +6,10 @@ import { HeaderCounts } from "@/components/header-counts";
 import { ChatIcon, MenuIcon, TruckIcon } from "@/components/icons";
 
 const NAV = [
-  { label: "Phones", href: categoryHref("smartphones") },
-  { label: "TVs & appliances", href: categoryHref("smart-tvs") },
-  { label: "Fridges", href: categoryHref("fridges") },
-  { label: "CCTV & security", href: categoryHref("cctv-and-security") },
+  { label: "Phones", slug: "smartphones" },
+  { label: "TVs & appliances", slug: "smart-tvs" },
+  { label: "Fridges", slug: "fridges" },
+  { label: "CCTV & security", slug: "cctv-and-security" },
 ];
 
 const CONTAINER = "mx-auto w-full max-w-[1860px] px-6";
@@ -53,8 +53,8 @@ export async function SiteHeader() {
               New stock
             </span>
           </Link>
-          {NAV.map((item) => (
-            <Link key={item.label} href={item.href} className="transition-colors hover:text-brand">
+          {NAV.filter((item) => categories.some((c) => c.slug === item.slug)).map((item) => (
+            <Link key={item.label} href={categoryHref(item.slug)} className="transition-colors hover:text-brand">
               {item.label}
             </Link>
           ))}
