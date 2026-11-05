@@ -9,13 +9,99 @@
   --color-ink: #0b1b33;
   --color-accent: #ffb020;
   --color-text: #1d2128;
+  --color-body: #3b4250;
   --color-muted: #6b7280;
   --color-line: #e6e9f0;
+  --color-on-ink: #c9d4e5;
 
   --font-sans: var(--font-rubik);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: #ffffff;
   color: var(--color-text);
+}
+
+/* Product grids: column count per screen width. Extras are hidden so a row
+   never ends in a gap. */
+.cg-side { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.cg-full { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cg-rows { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cat6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+@media (max-width: 1700px) {
+  .cg-side { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cg-full { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cg-rows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cg-side.one-row > :nth-child(n + 5),
+  .cg-side.two-rows > :nth-child(n + 9),
+  .cg-full.one-row > :nth-child(n + 6),
+  .cg-rows > :nth-child(n + 7) { display: none; }
+}
+@media (max-width: 1250px) {
+  .cg-side { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cg-full { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cg-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cg-side.one-row > :nth-child(n + 4),
+  .cg-side.two-rows > :nth-child(n + 7),
+  .cg-full.one-row > :nth-child(n + 5) { display: none; }
+}
+@media (max-width: 900px) {
+  .cg-side, .cg-full { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cg-rows { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .cat6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cg-side.one-row > :nth-child(n + 3) { display: none; }
+}
+@media (max-width: 560px) {
+  .cg-side, .cg-full { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+}
+
+/* Motion. Entrances use "backwards" fill only: once finished they leave no
+   transform behind, so they can't trap a card's hover panel under the next row. */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.fade-up, .card-in { animation: fade-up 0.28s ease-out backwards; }
+.pop { animation: pop 0.25s ease 0.1s backwards; }
+.float { animation: float 4s ease-in-out infinite; }
+
+dialog[open] { animation: modal-in 0.18s ease-out backwards; }
+dialog::backdrop { background: rgb(29 33 40 / 0.6); }
+
+.btn-lift { transition: transform 0.12s ease, filter 0.12s ease; }
+.btn-lift:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+.tile img { transition: transform 0.25s ease; }
+.tile:hover img { transform: scale(1.07); }
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: fade-up linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 12%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after, ::backdrop { animation: none !important; transition: none !important; }
 }
