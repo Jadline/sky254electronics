@@ -31,8 +31,6 @@ const COLUMNS = [
 
 const PAYMENTS = [
   { label: "M-PESA", className: "font-bold text-[#0e7a3a]" },
-  { label: "VISA", className: "font-bold text-[#1a1f71]" },
-  { label: "Mastercard", className: "font-bold text-text" },
   { label: "Cash on delivery", className: "font-medium text-text" },
 ];
 

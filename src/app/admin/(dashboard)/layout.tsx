@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/admin/actions";
 
 const LINKS = [
+  { href: "/admin/orders", label: "Orders" },
   { href: "/admin", label: "Products" },
   { href: "/admin/products/new", label: "Add product" },
   { href: "/admin/categories", label: "Categories" },

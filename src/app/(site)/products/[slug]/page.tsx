@@ -83,7 +83,7 @@ async function ProductDetails({ params }: { params: Params }) {
           <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-body">
             {product.brand && <li>– Brand: {product.brand}</li>}
             {product.warranty && <li>– {product.warranty}</li>}
-            <li>– Pay with M-Pesa, card or cash on delivery</li>
+            <li>– Pay by M-Pesa or cash on delivery</li>
           </ul>
           <div className="h-px bg-line" />
           <span className="text-sm text-body">
@@ -108,7 +108,7 @@ async function ProductDetails({ params }: { params: Params }) {
             {product.inStock ? "In stock" : "Sold out"}
           </span>
           <BuyBox product={product} />
-          <InfoBox title="Pay your way" Icon={PhoneIcon} lines={["Lipa na M-Pesa", "Visa or Mastercard", "Cash on delivery in Nairobi"]} />
+          <InfoBox title="Pay your way" Icon={PhoneIcon} lines={["Lipa na M-Pesa", "Cash on delivery in Nairobi"]} />
         </div>
       </section>
 

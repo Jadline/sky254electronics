@@ -2,7 +2,7 @@ import { ChatIcon, PhoneIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 
 const SERVICES = [
   { title: "Same-day delivery", sub: "Within Nairobi", Icon: TruckIcon },
-  { title: "Pay with M-Pesa", sub: "Or card, or cash on delivery", Icon: PhoneIcon },
+  { title: "Pay with M-Pesa", sub: "Or cash on delivery", Icon: PhoneIcon },
   { title: "Genuine, sealed", sub: "Official warranties", Icon: ShieldIcon },
   { title: "WhatsApp support", sub: "Talk to a real person", Icon: ChatIcon },
 ];

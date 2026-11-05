@@ -80,7 +80,7 @@ export function QuickView({ product }: { product: Product }) {
               <ul className="flex flex-col gap-2 text-[15px] leading-relaxed text-body">
                 {product.brand && <li>– Brand: {product.brand}</li>}
                 {product.warranty && <li>– {product.warranty}</li>}
-                <li>– Pay with M-Pesa, card or cash on delivery</li>
+                <li>– Pay by M-Pesa or cash on delivery</li>
                 <li>– Same-day delivery within Nairobi</li>
               </ul>
               <label className="flex items-center gap-3.5 text-sm text-body">

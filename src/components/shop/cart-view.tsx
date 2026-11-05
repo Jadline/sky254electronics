@@ -3,12 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CloseIcon } from "@/components/icons";
+import { CheckoutSteps } from "@/components/shop/checkout-steps";
 import { whatsappLink } from "@/config/site";
 import { clearCart, removeFromCart, setCartQty, useShop } from "@/lib/shop-store";
 import { formatKes, productHref, type Product } from "@/lib/types";
-
-const STEPS = ["Shopping cart", "Checkout", "Order completed"];
-const ARROW = "polygon(0 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 0 100%, 26px 50%)";
 
 export function CartView({ products }: { products: Product[] }) {
   const { cart } = useShop();
@@ -28,21 +26,7 @@ export function CartView({ products }: { products: Product[] }) {
 
   return (
     <div className="flex max-w-[1000px] flex-col gap-[30px]">
-      <ol aria-label="Checkout steps" className="flex flex-wrap gap-1">
-        {STEPS.map((step, i) => (
-          <li
-            key={step}
-            aria-current={i === 0 ? "step" : undefined}
-            style={{ clipPath: ARROW }}
-            className={`relative flex h-[58px] flex-[1_1_200px] items-center justify-center overflow-hidden ${i === 0 ? "bg-brand text-white" : "bg-[#f2f4f8]"}`}
-          >
-            <span aria-hidden="true" className={`absolute top-1/2 left-1/2 -translate-y-1/2 translate-x-[10%] text-[46px] font-bold ${i === 0 ? "text-white/20" : "text-text/10"}`}>
-              0{i + 1}
-            </span>
-            <span className="relative text-base font-medium uppercase">{step}</span>
-          </li>
-        ))}
-      </ol>
+      <CheckoutSteps current={0} />
 
       {unavailable.length > 0 && (
         <div role="status" className="flex flex-wrap items-center justify-between gap-3 bg-tint px-5 py-4 text-sm">
@@ -139,16 +123,15 @@ export function CartView({ products }: { products: Product[] }) {
                 <span className="text-[15px] text-body uppercase">Delivery</span>
                 <span className="text-sm text-body">We&apos;ll confirm this with your order</span>
               </div>
-              {whatsapp ? (
+              <Link href="/checkout" className="btn-lift flex h-11 items-center justify-center rounded-full bg-brand text-[13px] font-medium text-white uppercase">
+                Proceed to checkout
+              </Link>
+              {whatsapp && (
                 <a href={whatsapp} className="btn-lift flex h-10 items-center justify-center rounded-full border-2 border-text text-[13px] font-medium uppercase">
-                  Send order on WhatsApp
+                  Or send order on WhatsApp
                 </a>
-              ) : (
-                <button type="button" disabled className="h-10 cursor-not-allowed rounded-full border-2 border-text text-[13px] font-medium uppercase opacity-50">
-                  Checkout coming soon
-                </button>
               )}
-              <span className="text-center text-[13px] text-muted">Pay with M-Pesa, Visa, Mastercard or cash on delivery</span>
+              <span className="text-center text-[13px] text-muted">Pay by M-Pesa or cash on delivery</span>
             </div>
           </div>
         </>

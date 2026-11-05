@@ -248,3 +248,39 @@ export async function deleteCategory(_: FormState, form: FormData): Promise<Form
   refreshCatalog();
   return { message: "Deleted" };
 }
+
+// ---------- Orders ----------
+
+const STATUSES = ["pending", "confirmed", "out_for_delivery", "completed", "cancelled"];
+
+export async function updateOrder(_: FormState, form: FormData): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const id = text(form, "id");
+
+  const status = text(form, "status");
+  if (!STATUSES.includes(status)) return { error: "Please choose a valid status." };
+  const fee = parsePrice(text(form, "delivery_fee_kes"));
+  if (fee === undefined) return { error: "Delivery fee must be a whole number of shillings." };
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("subtotal_kes, payment_method, payment_status")
+    .eq("id", id)
+    .single();
+  if (!order) return { error: "That order no longer exists." };
+
+  const changes: Record<string, unknown> = {
+    status,
+    delivery_fee_kes: fee,
+    total_kes: order.subtotal_kes + (fee ?? 0),
+  };
+  // Only cash can be marked by hand. M-Pesa payments are confirmed by Safaricom.
+  if (order.payment_method === "cash") {
+    changes.payment_status = checked(form, "paid") ? "paid" : "unpaid";
+  }
+
+  const { error } = await supabase.from("orders").update(changes).eq("id", id);
+  if (error) return { error: "Couldn't save the order. Please try again." };
+  revalidatePath("/admin/orders");
+  return { message: "Saved." };
+}
