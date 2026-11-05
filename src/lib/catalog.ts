@@ -9,7 +9,12 @@ function publicClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      // "use cache" below decides how long results live. Without no-store, Next also
+      // saves the raw responses to disk and a new build would reuse the old data.
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+    },
   );
 }
 
@@ -21,6 +26,7 @@ type ProductRow = {
   price_kes: number | null;
   warranty: string | null;
   badge: string | null;
+  description: string | null;
   in_stock: boolean;
   categories: Category;
   product_images: ImageRow[];
@@ -39,7 +45,7 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await publicClient()
     .from("products")
     .select(
-      "slug, name, brand, price_kes, warranty, badge, in_stock, categories(slug, name), product_images(kind, storage_path, alt)",
+      "slug, name, brand, price_kes, warranty, badge, description, in_stock, categories(slug, name), product_images(kind, storage_path, alt)",
     )
     .order("created_at");
   if (error) throw new Error(`Couldn't load products: ${error.message}`);
@@ -52,6 +58,7 @@ export async function getProducts(): Promise<Product[]> {
     priceKes: row.price_kes,
     warranty: row.warranty,
     badge: row.badge,
+    description: row.description,
     inStock: row.in_stock,
     photo: photoOf(row, "product"),
     boxPhoto: photoOf(row, "box"),

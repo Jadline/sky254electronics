@@ -8,6 +8,7 @@ export type Product = {
   priceKes: number | null;
   warranty: string | null;
   badge: string | null;
+  description: string | null;
   inStock: boolean;
   /** The product on its own. Missing when we only have a box photo. */
   photo: ProductPhoto | null;

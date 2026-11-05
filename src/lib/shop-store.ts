@@ -72,6 +72,24 @@ export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
   });
 }
 
+export function setCartQty(slug: string, qty: number) {
+  load();
+  update({
+    ...state,
+    cart: state.cart.map((line) => (line.slug === slug ? { ...line, qty: Math.min(9, Math.max(1, qty)) } : line)),
+  });
+}
+
+export function removeFromCart(slug: string) {
+  load();
+  update({ ...state, cart: state.cart.filter((line) => line.slug !== slug) });
+}
+
+export function clearCart() {
+  load();
+  update({ ...state, cart: [] });
+}
+
 export function toggleWishlist(slug: string) {
   load();
   update({

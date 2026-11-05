@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { HeroSlider, type HeroSlide } from "@/components/home/hero-slider";
 import { ProductTabs } from "@/components/home/product-tabs";
-import { ChatIcon, ChevronRightIcon, PhoneIcon, ShieldIcon, TruckIcon } from "@/components/icons";
+import { ChevronRightIcon } from "@/components/icons";
 import { ProductCard, ProductCardMini, ProductCardRow } from "@/components/product-card";
+import { ServiceList } from "@/components/service-list";
 import { site } from "@/config/site";
 import { getCategories, getProducts } from "@/lib/catalog";
 import { categoryHref, formatKes, priceText, productHref, type Product } from "@/lib/types";
@@ -59,13 +60,6 @@ const MORE = [
   "samsung-galaxy-a57-5g-8gb-256gb", "tcl-55-inch-v6d-4k-google-tv", "imou-cue-2-3mp-wi-fi-camera",
   "hisense-203l-double-door-fridge", "35w-usb-c-charger-2m-cable", "tenda-tx2-pro-wi-fi-6-router",
   "lg-234l-top-freezer-fridge", "samsung-galaxy-a17-4gb-128gb",
-];
-
-const SERVICES = [
-  { title: "Same-day delivery", sub: "Within Nairobi", Icon: TruckIcon },
-  { title: "Pay with M-Pesa", sub: "Or card, or cash on delivery", Icon: PhoneIcon },
-  { title: "Genuine, sealed", sub: "Official warranties", Icon: ShieldIcon },
-  { title: "WhatsApp support", sub: "Talk to a real person", Icon: ChatIcon },
 ];
 
 const BRANDS = ["SAMSUNG", "Hisense", "TCL", "LG", "dahua", "imou", "Tenda", "NOKIA", "HP"];
@@ -224,17 +218,7 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          <div className="border border-b-0 border-line">
-            {SERVICES.map(({ title, sub, Icon }) => (
-              <div key={title} className="flex items-center gap-4 border-b border-line px-[22px] py-5">
-                <Icon className="size-8 flex-none text-brand" strokeWidth={1.3} />
-                <span className="flex flex-col gap-1">
-                  <strong className="text-sm font-medium">{title}</strong>
-                  <span className="text-xs text-muted">{sub}</span>
-                </span>
-              </div>
-            ))}
-          </div>
+          <ServiceList />
         </aside>
 
         <div className="flex min-w-0 flex-[999_1_640px] flex-col gap-[30px]">
