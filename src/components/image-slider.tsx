@@ -75,7 +75,8 @@ export function ImageSlider({
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${count}`}
               aria-hidden={i !== index}
-              className="relative h-full w-full flex-none"
+              // Light grey shows while a photo loads, instead of an empty white frame.
+              className="relative h-full w-full flex-none bg-[#f5f7fb]"
             >
               <Image
                 src={photo.src}
