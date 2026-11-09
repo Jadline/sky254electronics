@@ -1,5 +1,8 @@
 export type ProductPhoto = { src: string; alt: string };
 
+/** A photo in a product's slideshow. "product" photos are shown whole, "box" photos fill the frame. */
+export type GalleryPhoto = ProductPhoto & { kind: "product" | "box" };
+
 export type Product = {
   slug: string;
   name: string;
@@ -19,6 +22,8 @@ export type Product = {
   photo: ProductPhoto | null;
   /** The product in its box, or in the shop. */
   boxPhoto: ProductPhoto | null;
+  /** Every photo, in display order, for slideshows. */
+  photos: GalleryPhoto[];
 };
 
 export type Category = { slug: string; name: string };

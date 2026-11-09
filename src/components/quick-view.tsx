@@ -1,23 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AddToCartButton } from "@/components/card-actions";
 import { CloseIcon } from "@/components/icons";
+import { ImageSlider } from "@/components/image-slider";
 import { categoryHref, priceText, type Product } from "@/lib/types";
 
 export function QuickView({ product }: { product: Product }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [opened, setOpened] = useState(false);
-  const [view, setView] = useState<"product" | "box">(product.photo ? "product" : "box");
+  const [slide, setSlide] = useState(0);
   const [qty, setQty] = useState(1);
-
-  const views = [
-    product.photo && { key: "product" as const, label: "Product", image: product.photo },
-    product.boxPhoto && { key: "box" as const, label: "In the box", image: product.boxPhoto },
-  ].filter((v) => !!v);
-  const current = views.find((v) => v.key === view) ?? views[0];
 
   return (
     <>
@@ -25,6 +19,7 @@ export function QuickView({ product }: { product: Product }) {
         type="button"
         onClick={() => {
           setOpened(true);
+          setSlide(0);
           dialog.current?.showModal();
         }}
         className="absolute inset-x-0 bottom-0 h-10 cursor-pointer bg-tint text-[13px] font-medium uppercase opacity-0 transition-opacity duration-100 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:top-0 [@media(hover:none)]:right-auto [@media(hover:none)]:bottom-auto [@media(hover:none)]:h-7 [@media(hover:none)]:rounded-sm [@media(hover:none)]:px-2.5 [@media(hover:none)]:text-[11px] [@media(hover:none)]:opacity-100"
@@ -44,32 +39,14 @@ export function QuickView({ product }: { product: Product }) {
         {opened && (
           <div className="relative flex flex-wrap">
             <div className="flex flex-[1_1_380px] flex-col items-center gap-4 bg-[#262a35] p-[30px] max-sm:p-4">
-              <div className="relative aspect-square w-full bg-white">
-                {current && (
-                  <Image
-                    src={current.image.src}
-                    alt={current.image.alt}
-                    fill
-                    sizes="(max-width: 800px) 90vw, 500px"
-                    className={current.key === "product" ? "object-contain p-[6%]" : "object-cover"}
-                  />
-                )}
-              </div>
-              {views.length > 1 && (
-                <div className="flex gap-2">
-                  {views.map((v) => (
-                    <button
-                      key={v.key}
-                      type="button"
-                      aria-pressed={v.key === current?.key}
-                      onClick={() => setView(v.key)}
-                      className={`h-[34px] cursor-pointer rounded-full border border-white/35 px-3.5 text-[13px] transition-colors ${v.key === current?.key ? "bg-white text-text" : "text-white"}`}
-                    >
-                      {v.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <ImageSlider
+                photos={product.photos}
+                index={slide}
+                onIndexChange={setSlide}
+                label={`Photos of ${product.name}`}
+                sizes="(max-width: 800px) 90vw, 500px"
+                dots="light"
+              />
             </div>
 
             <div className="flex flex-[1_1_380px] flex-col gap-[18px] p-[30px] max-sm:p-5">

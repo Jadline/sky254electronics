@@ -18,7 +18,7 @@ function publicClient() {
   );
 }
 
-type ImageRow = { kind: "product" | "box"; storage_path: string; alt: string };
+type ImageRow = { kind: "product" | "box"; storage_path: string; alt: string; sort_order: number };
 type ProductRow = {
   slug: string;
   name: string;
@@ -49,7 +49,7 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await publicClient()
     .from("products")
     .select(
-      "slug, name, brand, price_kes, warranty, badge, description, short_name, is_featured, show_in_hero, show_in_banner, in_stock, categories(slug, name), product_images(kind, storage_path, alt)",
+      "slug, name, brand, price_kes, warranty, badge, description, short_name, is_featured, show_in_hero, show_in_banner, in_stock, categories(slug, name), product_images(kind, storage_path, alt, sort_order)",
     )
     .order("created_at", { ascending: false })
     .order("name");
@@ -71,6 +71,9 @@ export async function getProducts(): Promise<Product[]> {
     inStock: row.in_stock,
     photo: photoOf(row, "product"),
     boxPhoto: photoOf(row, "box"),
+    photos: [...row.product_images]
+      .sort((a, b) => a.sort_order - b.sort_order || (a.kind === "product" ? -1 : 1))
+      .map((image) => ({ src: productImageUrl(image.storage_path), alt: image.alt, kind: image.kind })),
   }));
 }
 
