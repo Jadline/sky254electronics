@@ -14,9 +14,10 @@ import { categoryHref, formatKes, priceText, productHref, type Product } from "@
 const TILE_CATEGORIES = ["fridges", "smart-tvs", "cctv-and-security", "networking"];
 const TOP_CATEGORIES = ["smartphones", "feature-phones", "smart-tvs", "fridges", "cctv-and-security", "chargers-and-cables"];
 const SECTIONS = [
-  { title: "Phones", categories: ["smartphones", "feature-phones", "chargers-and-cables"] },
-  { title: "TVs & home appliances", categories: ["smart-tvs", "fridges", "kitchen", "home-appliances", "tv-wall-mounts"] },
+  { title: "Phones & accessories", categories: ["smartphones", "feature-phones", "tablets", "chargers-and-cables", "power-banks", "phone-accessories"] },
+  { title: "TVs & home appliances", categories: ["smart-tvs", "fridges", "kitchen", "home-appliances", "tv-remotes-and-accessories", "tv-wall-mounts"] },
   { title: "Audio, lighting & security", categories: ["audio", "lighting", "cctv-and-security"] },
+  { title: "Computer, office & more", categories: ["memory-and-storage", "computer-accessories", "office-chairs", "extensions-and-power-protection", "networking", "personal-care"] },
 ];
 
 /** Takes turns from each list, so a row shows a mix instead of one department. */

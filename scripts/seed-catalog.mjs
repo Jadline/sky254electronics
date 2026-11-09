@@ -25,17 +25,23 @@ const cats = must(await supabase.from("categories").select("id, name"), "read ca
 const catId = Object.fromEntries(cats.map((c) => [c.name, c.id]));
 
 // Products
-const rows = products.map(({ slug, name, brand, category, price_kes, warranty, badge }) => ({
-  slug, name, brand, category_id: catId[category], price_kes, warranty, badge,
+const rows = products.map(({ slug, name, brand, category, price_kes, warranty, badge, is_active }) => ({
+  slug, name, brand, category_id: catId[category], price_kes, warranty, badge, is_active: is_active ?? true,
 }));
 must(await supabase.from("products").upsert(rows, { onConflict: "slug", ignoreDuplicates: true }), "products");
 const saved = must(await supabase.from("products").select("id, slug"), "read products");
 const productId = Object.fromEntries(saved.map((p) => [p.slug, p.id]));
 
-// Photos: stored as <slug>/<kind>.webp
+// Photos: stored as <slug>/<kind>.webp. Ones already recorded are skipped, so a
+// photo replaced in the dashboard is never overwritten by the seed copy.
+const { data: existing } = await supabase.from("product_images").select("product_id, kind");
+const done = new Set((existing ?? []).map((row) => `${row.product_id}:${row.kind}`));
 const jobs = products.flatMap((p) =>
-  Object.entries(manifest[p.key]).map(([kind, m]) => ({ p, kind, m })),
+  Object.entries(manifest[p.key])
+    .filter(([kind]) => !done.has(`${productId[p.slug]}:${kind}`))
+    .map(([kind, m]) => ({ p, kind, m })),
 );
+console.log(`${jobs.length} new photos to upload`);
 const imageRows = [];
 async function worker() {
   for (let job = jobs.pop(); job; job = jobs.pop()) {
