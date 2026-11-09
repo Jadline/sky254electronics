@@ -17,7 +17,12 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
     >
       <span className="text-xs tracking-wide text-muted uppercase">{product.category.name}</span>
       <h3 className="min-h-10 text-sm leading-snug font-medium">
-        <Link href={productHref(product.slug)} className="line-clamp-2 transition-colors hover:text-brand">
+        {/* The ::after layer stretches this link over the whole card, so a click anywhere
+            opens the product. Buttons on the card sit above it with z-[2]. */}
+        <Link
+          href={productHref(product.slug)}
+          className="line-clamp-2 transition-colors group-hover:text-brand after:absolute after:inset-0 after:z-[1] after:content-['']"
+        >
           {product.name}
         </Link>
       </h3>

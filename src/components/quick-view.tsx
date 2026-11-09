@@ -22,7 +22,7 @@ export function QuickView({ product }: { product: Product }) {
           setSlide(0);
           dialog.current?.showModal();
         }}
-        className="absolute inset-x-0 bottom-0 h-10 cursor-pointer bg-tint text-[13px] font-medium uppercase opacity-0 transition-opacity duration-100 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:top-0 [@media(hover:none)]:right-auto [@media(hover:none)]:bottom-auto [@media(hover:none)]:h-7 [@media(hover:none)]:rounded-sm [@media(hover:none)]:px-2.5 [@media(hover:none)]:text-[11px] [@media(hover:none)]:opacity-100"
+        className="absolute inset-x-0 bottom-0 z-[2] h-10 cursor-pointer bg-tint text-[13px] font-medium uppercase opacity-0 transition-opacity duration-100 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:top-0 [@media(hover:none)]:right-auto [@media(hover:none)]:bottom-auto [@media(hover:none)]:h-7 [@media(hover:none)]:rounded-sm [@media(hover:none)]:px-2.5 [@media(hover:none)]:text-[11px] [@media(hover:none)]:opacity-100"
       >
         Quick view
       </button>

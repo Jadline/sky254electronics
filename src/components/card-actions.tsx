@@ -53,7 +53,7 @@ export function WishlistButton({ product }: { product: Product }) {
 export function CardActions({ product }: { product: Product }) {
   const whatsapp = whatsappLink(`Hi Sky254, is the ${product.name} available?`);
   return (
-    <div className="absolute inset-x-[-1px] top-full z-10 hidden items-center justify-center gap-2 border border-t-0 border-line bg-white px-3.5 pt-3.5 pb-[18px] shadow-[0_14px_24px_rgba(29,33,40,0.12)] group-focus-within:flex group-hover:flex [@media(hover:none)]:static [@media(hover:none)]:flex [@media(hover:none)]:border-0 [@media(hover:none)]:p-0 [@media(hover:none)]:shadow-none">
+    <div className="absolute inset-x-[-1px] top-full z-10 hidden items-center justify-center gap-2 border border-t-0 border-line bg-white px-3.5 pt-3.5 pb-[18px] shadow-[0_14px_24px_rgba(29,33,40,0.12)] group-focus-within:flex group-hover:flex [@media(hover:none)]:relative [@media(hover:none)]:inset-auto [@media(hover:none)]:flex [@media(hover:none)]:border-0 [@media(hover:none)]:p-0 [@media(hover:none)]:shadow-none">
       {whatsapp && (
         <a
           href={whatsapp}
