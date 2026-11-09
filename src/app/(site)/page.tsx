@@ -112,18 +112,30 @@ export default async function Home() {
       <h1 className="sr-only">Sky254 Electronics: phones, TVs, fridges and CCTV in Nairobi</h1>
 
       <section className="fade-up flex flex-wrap items-start gap-[30px]">
-        <nav aria-label="Departments" className="min-w-60 flex-[0_1_270px] border border-t-0 border-line py-2.5 max-lg:hidden">
-          {categories.map((category, i) => (
+        {/* The slider sets this row's height. The list fills it and never pushes it taller:
+            departments that don't fit wrap into a clipped second column, so none is cut in half. */}
+        <nav aria-label="Departments" className="relative min-w-60 flex-[0_1_270px] self-stretch border border-t-0 border-line max-lg:hidden">
+          <div className="absolute inset-0 flex flex-col pt-2.5">
+            <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden">
+              {categories.map((category, i) => (
+                <Link
+                  key={category.slug}
+                  href={categoryHref(category.slug)}
+                  className="flex w-full flex-none items-center gap-3.5 px-[22px] py-[9px] text-[13px] transition-colors hover:text-brand"
+                >
+                  <span className={`size-1.5 flex-none rounded-[1px] ${i % 2 === 0 ? "bg-brand" : "bg-[#c5cbd6]"}`} />
+                  <span className="flex-1">{category.name}</span>
+                  <ChevronRightIcon className="size-2.5 text-muted" strokeWidth={2.5} />
+                </Link>
+              ))}
+            </div>
             <Link
-              key={category.slug}
-              href={categoryHref(category.slug)}
-              className="flex items-center gap-3.5 px-[22px] py-[9px] text-[13px] transition-colors hover:text-brand"
+              href="/shop"
+              className="flex items-center gap-1.5 border-t border-line px-[22px] py-3 text-[13px] font-medium text-brand hover:underline"
             >
-              <span className={`size-1.5 rounded-[1px] ${i % 2 === 0 ? "bg-brand" : "bg-[#c5cbd6]"}`} />
-              <span className="flex-1">{category.name}</span>
-              <ChevronRightIcon className="size-2.5 text-muted" strokeWidth={2.5} />
+              All departments <ChevronRightIcon className="size-2.5" strokeWidth={2.5} />
             </Link>
-          ))}
+          </div>
         </nav>
 
         <div className="flex min-w-0 flex-[999_1_640px] flex-wrap gap-5">

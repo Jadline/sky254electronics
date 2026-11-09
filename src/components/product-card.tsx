@@ -9,6 +9,14 @@ const CARD_SIZES = "(max-width: 560px) 100vw, (max-width: 900px) 50vw, 320px";
 /** Standard grid card: clean photo by default, box photo and actions on hover. */
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const { photo, boxPhoto } = product;
+  // Hovering swaps to a second photo: the box shot, or else the next photo in the
+  // gallery. With only one photo, the card keeps showing it.
+  const extra = product.photos.find((p) => p.src !== photo?.src && p.src !== boxPhoto?.src);
+  const hover = boxPhoto
+    ? { ...boxPhoto, kind: "box" as const }
+    : photo && extra
+      ? extra
+      : null;
 
   return (
     <article
@@ -28,13 +36,13 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       </h3>
 
       <div className="relative aspect-square overflow-hidden bg-white">
-        {boxPhoto && (
+        {hover && (
           <Image
-            src={boxPhoto.src}
-            alt={photo ? "" : boxPhoto.alt}
+            src={hover.src}
+            alt={photo ? "" : hover.alt}
             fill
             sizes={CARD_SIZES}
-            className={`object-cover transition duration-200 group-hover:scale-105 ${photo ? "opacity-0 group-hover:opacity-100" : ""}`}
+            className={`transition duration-200 group-hover:scale-105 ${hover.kind === "box" ? "object-cover" : "object-contain p-[8%]"} ${photo ? "opacity-0 group-hover:opacity-100" : ""}`}
           />
         )}
         {photo && (
@@ -43,7 +51,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             alt={photo.alt}
             fill
             sizes={CARD_SIZES}
-            className="object-contain p-[8%] transition-opacity duration-150 group-hover:opacity-0"
+            className={`object-contain p-[8%] transition-opacity duration-150 ${hover ? "group-hover:opacity-0" : ""}`}
           />
         )}
         {product.badge && (

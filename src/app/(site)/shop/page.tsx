@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ProductCard, ProductCardRow } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
+import { SideTitle } from "@/components/side-title";
 import { AutoSubmitSelect } from "@/components/shop/auto-submit-select";
 import { getCategories, getProducts } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
@@ -106,14 +107,6 @@ function Hidden({ filters, omit }: { filters: Filters; omit: (keyof Filters | "b
   add("view", filters.view !== "grid" ? filters.view : "");
   if (!omit.includes("brand")) filters.brands.forEach((brand) => fields.push(["brand", brand]));
   return fields.map(([name, value]) => <input key={name + value} type="hidden" name={name} value={value} />);
-}
-
-function SideTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="relative mb-5 border-b border-line pb-3.5 text-base font-medium after:absolute after:-bottom-px after:left-0 after:h-0.5 after:w-[70px] after:bg-brand">
-      {children}
-    </h2>
-  );
 }
 
 async function ShopResults({ searchParams }: { searchParams: Promise<RawParams> }) {
