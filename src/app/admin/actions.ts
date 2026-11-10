@@ -7,6 +7,7 @@ import { getAdmin, requireAdmin } from "@/lib/admin-auth";
 import { announce, CATALOG_TOPIC, orderTopic } from "@/lib/live";
 import { BADGES, MAX_BANNERS, MAX_SLIDER, SHORT_NAME_MAX } from "@/lib/home-rules";
 import { isSoldStatus } from "@/lib/inventory";
+import { salePrice } from "@/lib/pricing";
 import { sendCustomerUpdate } from "@/lib/notify";
 import { MAX_PHOTOS, PRODUCTS_BUCKET, type UploadedImage } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -133,6 +134,26 @@ async function checkHomePage(
   return null;
 }
 
+/**
+ * A discount from the form: a percentage (1–99) or shillings off, or blank for none.
+ * It must leave something to pay, so it needs a price.
+ */
+function parseDiscount(
+  rawType: string,
+  rawValue: string,
+  price: number | null,
+): { discount_type: string | null; discount_value: number | null } | { error: string } {
+  const cleaned = rawValue.replace(/[,\s%]/g, "");
+  if (cleaned === "") return { discount_type: null, discount_value: null };
+  const type = rawType === "amount" ? "amount" : "percent";
+  if (!/^\d{1,9}$/.test(cleaned)) return { error: "Discount must be a whole number, like 10 for 10% or 500 for KSh 500 off." };
+  const value = Number(cleaned);
+  if (price == null) return { error: "Add a price before giving a discount." };
+  if (type === "percent" && (value < 1 || value > 99)) return { error: "A percentage discount must be between 1 and 99." };
+  if (salePrice(price, type, value) == null) return { error: "That discount is more than the price. Please use a smaller one." };
+  return { discount_type: type, discount_value: value };
+}
+
 /** What saving a product reports. A new product also returns its id and slug, so its photos can follow. */
 export type SavedProduct = FormState & { id?: string; slug?: string };
 
@@ -146,11 +167,8 @@ export async function saveProduct(form: FormData): Promise<SavedProduct> {
   if (!categoryId) return { error: "Please choose a category." };
   const price = parsePrice(text(form, "price_kes"));
   if (price === undefined) return { error: "Price must be a whole number of shillings, like 22500." };
-  const wasPrice = parsePrice(text(form, "was_price_kes"));
-  if (wasPrice === undefined) return { error: "Was price must be a whole number of shillings, like 25000." };
-  if (wasPrice != null && (price == null || wasPrice <= price)) {
-    return { error: "Was price must be higher than the price, or left blank." };
-  }
+  const discount = parseDiscount(text(form, "discount_type"), text(form, "discount_value"), price);
+  if ("error" in discount) return { error: discount.error };
 
   const values = {
     name,
@@ -158,7 +176,7 @@ export async function saveProduct(form: FormData): Promise<SavedProduct> {
     brand: optional(form, "brand"),
     category_id: categoryId,
     price_kes: price,
-    was_price_kes: wasPrice,
+    ...discount,
     warranty: optional(form, "warranty"),
     badge: optional(form, "badge"),
     description: optional(form, "description"),
@@ -230,6 +248,19 @@ export async function setProductPrice(id: string, raw: string): Promise<FormStat
   if (error) return { error: "Couldn't save the price." };
   refreshCatalog();
   return { message: "Saved" };
+}
+
+/** A discount typed straight into the products list: a percentage or shillings off. Blank removes it. */
+export async function setProductDiscount(id: string, type: string, raw: string): Promise<FormState> {
+  const { supabase } = await requireAdmin();
+  const { data: product } = await supabase.from("products").select("price_kes").eq("id", id).maybeSingle();
+  if (!product) return { error: "That product no longer exists." };
+  const discount = parseDiscount(type, raw.trim(), product.price_kes);
+  if ("error" in discount) return { error: discount.error };
+  const { error } = await supabase.from("products").update(discount).eq("id", id);
+  if (error) return { error: "Couldn't save the discount." };
+  refreshCatalog();
+  return { message: discount.discount_value == null ? "Discount removed" : "Discount saved" };
 }
 
 /** Deletes a product and its photos, from the list or the product's own page. */
@@ -448,13 +479,15 @@ export async function updateOrder(_: FormState, form: FormData): Promise<FormSta
   const fee = parsePrice(text(form, "delivery_fee_kes"));
   if (fee === undefined) return { error: "Delivery fee must be a whole number of shillings." };
 
-  const { data: order } = await supabase.from("orders").select("status, subtotal_kes, payment_method, payment_status").eq("id", id).single();
+  // "*" so this still works before the coupons migration adds discount_kes.
+  const { data: order } = await supabase.from("orders").select("*").eq("id", id).single();
   if (!order) return { error: "That order no longer exists." };
 
   const changes: Record<string, unknown> = {
     status,
     delivery_fee_kes: fee,
-    total_kes: order.subtotal_kes + (fee ?? 0),
+    // Keep any coupon discount when the fee changes.
+    total_kes: order.subtotal_kes - (order.discount_kes ?? 0) + (fee ?? 0),
   };
   // Only cash can be marked by hand. M-Pesa payments are confirmed by Safaricom.
   if (order.payment_method === "cash") {

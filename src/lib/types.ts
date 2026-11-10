@@ -9,7 +9,7 @@ export type Product = {
   brand: string | null;
   category: { slug: string; name: string };
   priceKes: number | null;
-  /** The price before an offer, shown crossed out. Only set when higher than priceKes. */
+  /** On sale: the original price, shown crossed out, while priceKes is the sale price. Otherwise null. */
   wasPriceKes: number | null;
   warranty: string | null;
   badge: string | null;

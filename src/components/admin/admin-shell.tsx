@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { logout } from "@/app/admin/actions";
 
-export type BadgeKey = "orders" | "payments";
+export type BadgeKey = "orders" | "payments" | "enquiries" | "reviews";
 
 type Item = { name: string; href: string; exact?: boolean; badge?: BadgeKey; also?: string[] };
 
@@ -18,6 +18,7 @@ const SECTIONS: { title: string; items: Item[] }[] = [
       { name: "Orders", href: "/admin/orders", badge: "orders" },
       { name: "Payments", href: "/admin/payments", badge: "payments" },
       { name: "Customers", href: "/admin/customers" },
+      { name: "Enquiries", href: "/admin/enquiries", badge: "enquiries" },
       { name: "Subscribers", href: "/admin/subscribers" },
     ],
   },
@@ -26,6 +27,8 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     items: [
       { name: "Products", href: "/admin/products" },
       { name: "Categories", href: "/admin/categories" },
+      { name: "Coupons", href: "/admin/coupons" },
+      { name: "Reviews", href: "/admin/reviews", badge: "reviews" },
     ],
   },
   {

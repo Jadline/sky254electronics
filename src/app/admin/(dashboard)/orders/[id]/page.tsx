@@ -166,6 +166,14 @@ async function OrderDetail({ params }: { params: Params }) {
               <dd className="text-right">{plural(items.reduce((t, i) => t + i.qty, 0), "unit")}</dd>
               <dt className="text-adm-muted">Subtotal</dt>
               <dd className="text-right">{ksh(order.subtotal_kes)}</dd>
+              {order.discount_kes > 0 && (
+                <>
+                  <dt className="text-adm-muted">
+                    Coupon <span className="font-mono font-semibold text-adm-ink">{order.coupon_code}</span>
+                  </dt>
+                  <dd className="text-right text-[#116632]">−{ksh(order.discount_kes)}</dd>
+                </>
+              )}
               <dt className="text-adm-muted">{isPickup ? "Pickup" : "Delivery"}</dt>
               <dd className="text-right">
                 {order.delivery_fee_kes == null ? (
@@ -218,7 +226,7 @@ async function OrderDetail({ params }: { params: Params }) {
             status={status}
             delivery={method}
             deliveryFee={order.delivery_fee_kes}
-            subtotal={order.subtotal_kes}
+            subtotal={order.subtotal_kes - (order.discount_kes ?? 0)}
             isCash={payMethod === "cash"}
             isPaid={order.payment_status === "paid"}
             paymentLabel={`${PAYMENT_METHOD[payMethod]} · ${pay.label}`}

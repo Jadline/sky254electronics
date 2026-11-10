@@ -6,6 +6,7 @@ import { ProductTable, type AdminProductRow } from "@/components/admin/product-t
 import { buttonClass, Loading, PageHeader } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin-auth";
 import { SOLD_STATUSES } from "@/lib/inventory";
+import type { DiscountType } from "@/lib/pricing";
 import { productImageUrl } from "@/lib/storage";
 
 export const metadata: Metadata = { title: "Products" };
@@ -18,6 +19,8 @@ type Row = {
   name: string;
   brand: string | null;
   price_kes: number | null;
+  discount_type: DiscountType | null;
+  discount_value: number | null;
   in_stock: boolean;
   is_active: boolean;
   is_featured: boolean;
@@ -36,7 +39,7 @@ async function Products({ searchParams }: { searchParams: SearchParams }) {
     supabase
       .from("products")
       .select(
-        "id, slug, name, brand, price_kes, in_stock, is_active, is_featured, stock_qty, stock_sold, created_at, categories(name), product_images(kind, storage_path)",
+        "id, slug, name, brand, price_kes, discount_type, discount_value, in_stock, is_active, is_featured, stock_qty, stock_sold, created_at, categories(name), product_images(kind, storage_path)",
       )
       .order("created_at", { ascending: false })
       .order("name"),
@@ -62,6 +65,8 @@ async function Products({ searchParams }: { searchParams: SearchParams }) {
       brand: row.brand,
       category: row.categories.name,
       priceKes: row.price_kes,
+      discountType: row.discount_type,
+      discountValue: row.discount_value,
       inStock: row.in_stock,
       isActive: row.is_active,
       isFeatured: row.is_featured,

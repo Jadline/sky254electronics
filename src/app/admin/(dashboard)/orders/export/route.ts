@@ -21,6 +21,9 @@ type Row = {
   subtotal_kes: number;
   delivery_fee_kes: number | null;
   total_kes: number;
+  /** Missing until the coupons migration has been run. */
+  coupon_code?: string | null;
+  discount_kes?: number;
   order_items: { product_name: string; qty: number }[];
 };
 
@@ -32,14 +35,15 @@ export async function GET() {
   const { data, error } = await admin.supabase
     .from("orders")
     .select(
-      "order_number, created_at, status, payment_method, payment_status, customer_name, customer_phone, customer_email, delivery_method, delivery_address, subtotal_kes, delivery_fee_kes, total_kes, order_items(product_name, qty)",
+      // "*" so the export still works before the coupons migration adds its columns.
+      "*, order_items(product_name, qty)",
     )
     .order("created_at", { ascending: false })
     .limit(10000);
   if (error) return new Response("Couldn't load the orders.", { status: 500 });
 
   const rows: (string | number)[][] = [
-    ["order_number", "placed", "customer", "phone", "email", "delivery", "address", "items", "subtotal_kes", "delivery_kes", "total_kes", "payment_method", "payment", "status"],
+    ["order_number", "placed", "customer", "phone", "email", "delivery", "address", "items", "subtotal_kes", "coupon", "discount_kes", "delivery_kes", "total_kes", "payment_method", "payment", "status"],
     ...(data as unknown as Row[]).map((o) => [
       o.order_number,
       o.created_at,
@@ -50,6 +54,8 @@ export async function GET() {
       o.delivery_address ?? "",
       o.order_items.map((i) => `${i.qty} x ${i.product_name}`).join("; "),
       o.subtotal_kes,
+      o.coupon_code ?? "",
+      o.discount_kes ?? 0,
       o.delivery_fee_kes ?? "",
       o.total_kes,
       PAYMENT_METHOD[o.payment_method] ?? o.payment_method,

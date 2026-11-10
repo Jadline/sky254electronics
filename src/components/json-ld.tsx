@@ -1,5 +1,6 @@
 import { absoluteUrl, site, siteUrl } from "@/config/site";
 import type { ShopSettings } from "@/lib/settings";
+import type { ReviewSummary } from "@/lib/reviews";
 import { productHref, type Product } from "@/lib/types";
 
 /**
@@ -48,7 +49,7 @@ export function storeJsonLd(settings: ShopSettings) {
  * A product and its offer, for Google's product results. Products without a price
  * ("Ask for price") have no offer, so Google shows them without one.
  */
-export function productJsonLd(product: Product, settings: ShopSettings) {
+export function productJsonLd(product: Product, settings: ShopSettings, reviews?: ReviewSummary) {
   const url = absoluteUrl(productHref(product.slug));
   const shippingRate = settings.delivery.countrywide ?? settings.delivery.nairobi;
   return {
@@ -62,6 +63,18 @@ export function productJsonLd(product: Product, settings: ShopSettings) {
     ...(product.description && { description: product.description.slice(0, 5000) }),
     ...(product.brand && { brand: { "@type": "Brand", name: product.brand } }),
     category: product.category.name,
+    // Stars in Google results. Only approved reviews, which customers wrote on this site.
+    ...(reviews?.count && {
+      aggregateRating: { "@type": "AggregateRating", ratingValue: reviews.average, reviewCount: reviews.count, bestRating: 5, worstRating: 1 },
+      review: reviews.reviews.slice(0, 10).map((r) => ({
+        "@type": "Review",
+        author: { "@type": "Person", name: r.name },
+        datePublished: r.createdAt.slice(0, 10),
+        reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+        ...(r.title && { name: r.title }),
+        reviewBody: r.body,
+      })),
+    }),
     ...(product.priceKes != null && {
       offers: {
         "@type": "Offer",

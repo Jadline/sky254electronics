@@ -50,6 +50,9 @@ type OrderAlert = {
   deliveryAddress: string | null;
   notes: string | null;
   subtotalKes: number;
+  /** Taken off by a coupon. */
+  discountKes?: number;
+  couponCode?: string | null;
   /** null = to be confirmed by phone. */
   deliveryFeeKes: number | null;
   adminUrl: string;
@@ -64,25 +67,48 @@ export async function sendOrderAlert(order: OrderAlert) {
   const rows = order.items
     .map((item) => `<li>${item.qty} x ${escapeHtml(item.name)}: ${formatKes(item.lineTotalKes)}</li>`)
     .join("");
+  const discount = order.discountKes ?? 0;
+  const payable = order.subtotalKes - discount;
   const total =
     order.deliveryFeeKes == null
-      ? `Subtotal: ${formatKes(order.subtotalKes)}</strong> (delivery to be confirmed)`
-      : `Total: ${formatKes(order.subtotalKes + order.deliveryFeeKes)}</strong> (delivery ${order.deliveryFeeKes ? formatKes(order.deliveryFeeKes) : "free"})`;
+      ? `${discount ? "After coupon" : "Subtotal"}: ${formatKes(payable)}</strong> (delivery to be confirmed)`
+      : `Total: ${formatKes(payable + order.deliveryFeeKes)}</strong> (delivery ${order.deliveryFeeKes ? formatKes(order.deliveryFeeKes) : "free"})`;
   const html = `
     <h2>New order ${escapeHtml(order.orderNumber)}</h2>
     <p><strong>${escapeHtml(order.customerName)}</strong>, ${escapeHtml(formatPhone(order.customerPhone))}</p>
     <p>${escapeHtml(DELIVERY_METHODS[order.deliveryMethod].label)}${order.deliveryAddress ? `: ${escapeHtml(order.deliveryAddress)}` : ""}</p>
     <ul>${rows}</ul>
+    ${discount ? `<p>Coupon ${escapeHtml(order.couponCode ?? "")}: −${formatKes(discount)}</p>` : ""}
     <p><strong>${total}</p>
     ${order.notes ? `<p>Notes: ${escapeHtml(order.notes)}</p>` : ""}
     <p><a href="${escapeHtml(order.adminUrl)}">Open this order in the dashboard</a></p>`;
 
   await sendEmail(
     to,
-    `New order ${order.orderNumber}: ${formatKes(order.subtotalKes + (order.deliveryFeeKes ?? 0))}`,
+    `New order ${order.orderNumber}: ${formatKes(payable + (order.deliveryFeeKes ?? 0))}`,
     html,
     `Order alert for ${order.orderNumber}`,
   );
+}
+
+/** Emails the shop about a message from the contact form. Same setup as sendOrderAlert. */
+export async function sendEnquiryAlert(enquiry: {
+  name: string;
+  phone: string | null;
+  email: string | null;
+  topic: string;
+  message: string;
+  adminUrl: string;
+}) {
+  const to = process.env.ORDER_ALERT_EMAIL;
+  if (!to) return;
+  const contact = [enquiry.phone && formatPhone(enquiry.phone), enquiry.email].filter(Boolean).join(" · ");
+  const html = `
+    <h2>New enquiry: ${escapeHtml(enquiry.topic)}</h2>
+    <p><strong>${escapeHtml(enquiry.name)}</strong>, ${escapeHtml(contact)}</p>
+    <p style="white-space:pre-wrap">${escapeHtml(enquiry.message)}</p>
+    <p><a href="${escapeHtml(enquiry.adminUrl)}">Open Enquiries in the dashboard</a></p>`;
+  await sendEmail(to, `New enquiry from ${enquiry.name}`, html, "Enquiry alert");
 }
 
 // ---------- To the customer ----------

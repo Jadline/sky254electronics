@@ -93,6 +93,12 @@ async function OrderDetails({ params }: { params: Params }) {
           </ul>
           <div className="flex flex-col gap-2 border-t border-line pt-3.5 text-sm">
             <div className="flex justify-between gap-4"><span className="text-body">Subtotal</span><span>{formatKes(order.subtotal_kes)}</span></div>
+            {order.discount_kes > 0 && (
+              <div className="flex justify-between gap-4">
+                <span className="text-body">Coupon {order.coupon_code}</span>
+                <span className="text-[#15803d]">−{formatKes(order.discount_kes)}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-4">
               <span className="text-body">Delivery</span>
               <span>

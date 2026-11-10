@@ -12,11 +12,15 @@ import { ProductCard, ProductCardMini } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
 import { SideTitle } from "@/components/side-title";
 import { site } from "@/config/site";
-import { getCategories, getProducts, getShopSettings } from "@/lib/catalog";
+import { getCategories, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
+import { summarise } from "@/lib/reviews";
+import { ProductReviews } from "@/components/product/product-reviews";
+import { Stars } from "@/components/product/stars";
 import { categoryHref, priceText, productHref, type Product } from "@/lib/types";
 import { WasPrice } from "@/components/was-price";
 import { TrackProductView } from "@/components/analytics";
 import { breadcrumbJsonLd, JsonLd, productJsonLd } from "@/components/json-ld";
+import { priceTone } from "@/lib/pricing";
 
 type Params = Promise<{ slug: string }>;
 
@@ -80,9 +84,10 @@ function ProductRow({ title, items }: { title: string; items: Product[] }) {
 
 async function ProductDetails({ params }: { params: Params }) {
   const { slug } = await params;
-  const [products, categories, settings] = await Promise.all([getProducts(), getCategories(), getShopSettings()]);
+  const [products, categories, settings, allReviews] = await Promise.all([getProducts(), getCategories(), getShopSettings(), getReviews()]);
   const product = products.find((p) => p.slug === slug);
   if (!product) notFound();
+  const reviews = summarise(allReviews.filter((r) => r.productSlug === slug));
 
   const others = products.filter((p) => p.slug !== slug);
   const sameCategory = others.filter((p) => p.category.slug === product.category.slug);
@@ -107,7 +112,7 @@ async function ProductDetails({ params }: { params: Params }) {
 
   return (
     <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-20">
-      <JsonLd data={productJsonLd(product, settings)} />
+      <JsonLd data={productJsonLd(product, settings, reviews)} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -178,6 +183,12 @@ async function ProductDetails({ params }: { params: Params }) {
 
             <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-4">
               <h1 className="text-[26px] leading-tight font-medium text-brand">{product.name}</h1>
+              {reviews.count > 0 && (
+                <a href="#product-info" className="flex items-center gap-2 text-[13px] text-muted hover:text-brand">
+                  <Stars rating={reviews.average} className="size-3.5" />
+                  {reviews.average.toFixed(1)} · {reviews.count} {reviews.count === 1 ? "review" : "reviews"}
+                </a>
+              )}
               {summary ? (
                 <p className="text-sm leading-relaxed text-body">
                   – {summary}{" "}
@@ -190,7 +201,7 @@ async function ProductDetails({ params }: { params: Params }) {
                 </ul>
               )}
 
-              <strong className={`mt-1 text-[26px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+              <strong className={`mt-1 text-[26px] font-medium ${priceTone(product)}`}>
                 {priceText(product)}
               </strong>
               <WasPrice product={product} />
@@ -254,6 +265,16 @@ async function ProductDetails({ params }: { params: Params }) {
                         ))}
                       </tbody>
                     </table>
+                  ),
+                },
+                {
+                  id: "reviews",
+                  label: reviews.count ? `Reviews (${reviews.count})` : "Reviews",
+                  content: (
+                    <div className={panel}>
+                      <h2 className="mb-4 text-lg font-medium">Customer reviews</h2>
+                      <ProductReviews productSlug={product.slug} summary={reviews} />
+                    </div>
                   ),
                 },
                 {

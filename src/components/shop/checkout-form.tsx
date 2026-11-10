@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { placeOrder } from "@/app/(site)/checkout/actions";
+import { previewCoupon } from "@/app/(site)/checkout/coupon-actions";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
 import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/order-labels";
 import { deliveryFee, type DeliveryRates } from "@/lib/settings";
@@ -21,6 +22,11 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [placed, setPlaced] = useState(false);
   const [pending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; label: string; discountKes: number; forSubtotal: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checkingCoupon, startCouponCheck] = useTransition();
 
   // Totals shown here use live prices. The server recalculates them again when ordering.
   const lines = cart.flatMap((line) => {
@@ -30,9 +36,14 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
       : [];
   });
   const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
-  const fee = deliveryFee(method, subtotal, rates);
+  // A coupon was checked for one subtotal. If the cart changes, it has to be applied again.
+  const activeCoupon = coupon && coupon.forSubtotal === subtotal ? coupon : null;
+  const discount = activeCoupon?.discountKes ?? 0;
+  const payable = subtotal - discount;
+  // Free delivery is judged on what's paid after the coupon, as the server does.
+  const fee = deliveryFee(method, payable, rates);
   const feeText = (option: DeliveryMethod) => {
-    const value = deliveryFee(option, subtotal, rates);
+    const value = deliveryFee(option, payable, rates);
     if (value == null) return DELIVERY_METHODS[option].hint;
     if (option === "pickup") return `Free. ${DELIVERY_METHODS[option].hint}`;
     return value === 0 ? "Free delivery on this order." : `${formatKes(value)} delivery.`;
@@ -59,6 +70,23 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
     );
   }
 
+  function applyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+    const phone = (formRef.current?.elements.namedItem("phone") as HTMLInputElement | null)?.value ?? "";
+    setCouponError(null);
+    startCouponCheck(async () => {
+      const result = await previewCoupon(code, subtotal, phone);
+      if (result.ok) {
+        setCoupon({ code: result.code, label: result.label, discountKes: result.discountKes, forSubtotal: subtotal });
+        setCouponInput(result.code);
+      } else {
+        setCoupon(null);
+        setCouponError(result.error);
+      }
+    });
+  }
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -74,6 +102,8 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
         deliveryMethod: method,
         address: value("address"),
         notes: value("notes"),
+        couponCode: activeCoupon?.code,
+        expectedDiscount: activeCoupon?.discountKes,
         website: value("website"),
       });
       if (result.ok) {
@@ -81,7 +111,7 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
         track({
           name: "purchase",
           orderNumber: result.orderNumber,
-          valueKes: subtotal + (fee ?? 0),
+          valueKes: payable + (fee ?? 0),
           shippingKes: fee,
           items: lines.map((line) => ({
             id: line.product.slug,
@@ -97,6 +127,7 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
         router.push(`/order/${result.token}`);
       } else {
         setError({ message: result.error, field: result.field });
+        if (result.field === "coupon") setCoupon(null);
         router.refresh();
       }
     });
@@ -115,7 +146,7 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
         </p>
       )}
 
-      <form onSubmit={submit} className="flex flex-wrap items-start gap-[30px]" noValidate>
+      <form ref={formRef} onSubmit={submit} className="flex flex-wrap items-start gap-[30px]" noValidate>
         <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-[30px]">
           <fieldset className="flex flex-col gap-4 border border-line p-6">
             <legend className="px-2 text-[15px] font-medium uppercase">Your details</legend>
@@ -195,18 +226,82 @@ export function CheckoutForm({ products, rates }: { products: Product[]; rates: 
               <span className="text-body">Subtotal</span>
               <span className="font-medium">{formatKes(subtotal)}</span>
             </div>
+            {activeCoupon && (
+              <div className="flex justify-between gap-3">
+                <span className="text-body">
+                  Coupon <strong className="font-medium text-text">{activeCoupon.code}</strong>
+                  <span className="block text-xs text-muted">{activeCoupon.label}</span>
+                </span>
+                <span className="font-medium text-[#15803d]">−{formatKes(discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-3">
               <span className="text-body">Delivery</span>
               <span className="text-right text-body">{fee === 0 ? "Free" : fee == null ? "We'll confirm this" : formatKes(fee)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
               <span className="font-medium">Total to pay</span>
-              <span className="text-xl font-medium text-brand">{formatKes(subtotal + (fee ?? 0))}</span>
+              <span className="text-xl font-medium text-brand">{formatKes(payable + (fee ?? 0))}</span>
             </div>
             {fee == null && <p className="text-xs text-muted">Plus delivery, which we&apos;ll confirm when we call you.</p>}
             {fee != null && fee > 0 && rates.freeOver != null && (
               <p className="text-xs text-muted">Free delivery on orders of {formatKes(rates.freeOver)} or more.</p>
             )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="coupon" className="text-sm font-medium">Coupon code</label>
+            <div className="flex gap-2">
+              <input
+                id="coupon"
+                value={couponInput}
+                onChange={(e) => {
+                  setCouponInput(e.target.value);
+                  setCouponError(null);
+                }}
+                onKeyDown={(e) => {
+                  // Enter applies the code instead of placing the order.
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyCoupon();
+                  }
+                }}
+                autoComplete="off"
+                autoCapitalize="characters"
+                maxLength={30}
+                placeholder="Optional"
+                aria-invalid={!!couponError || invalid("coupon")}
+                aria-describedby="coupon-help"
+                className={`${FIELD} min-w-0 flex-1 uppercase placeholder:normal-case`}
+              />
+              {activeCoupon ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCoupon(null);
+                    setCouponInput("");
+                  }}
+                  className="h-11 cursor-pointer border border-line px-4 text-[13px] font-medium uppercase hover:border-brand hover:text-brand"
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={applyCoupon}
+                  disabled={checkingCoupon || !couponInput.trim()}
+                  className="h-11 cursor-pointer border border-brand px-4 text-[13px] font-medium text-brand uppercase hover:bg-tint disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {checkingCoupon ? "Checking…" : "Apply"}
+                </button>
+              )}
+            </div>
+            <p id="coupon-help" role={couponError ? "alert" : undefined} className={`text-xs ${couponError ? "text-[#b42318]" : "text-muted"}`}>
+              {couponError ??
+                (coupon && !activeCoupon
+                  ? "Your cart changed. Apply your code again."
+                  : "Coupons apply to the prices shown, including items already on offer.")}
+            </p>
           </div>
 
           <div className="bg-tint p-4 text-[13px] leading-relaxed">

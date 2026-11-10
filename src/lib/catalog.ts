@@ -1,8 +1,10 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { productImageUrl } from "@/lib/storage";
+import { salePrice } from "@/lib/pricing";
 import { settingsFromRow, type ShopSettings } from "@/lib/settings";
 import { SITE_PAGES, type SitePage, type SitePageSlug } from "@/lib/site-pages";
+import type { Review } from "@/lib/reviews";
 import type { Category, Product, ProductPhoto } from "@/lib/types";
 
 // The catalogue is public, so it uses the publishable key with no cookies. That
@@ -26,7 +28,8 @@ type ProductRow = {
   name: string;
   brand: string | null;
   price_kes: number | null;
-  was_price_kes: number | null;
+  discount_type: string | null;
+  discount_value: number | null;
   warranty: string | null;
   badge: string | null;
   description: string | null;
@@ -55,7 +58,7 @@ export async function getProducts(): Promise<Product[]> {
   const { data, error } = await publicClient()
     .from("products")
     .select(
-      "slug, name, brand, price_kes, was_price_kes, warranty, badge, description, short_name, is_featured, show_in_hero, show_in_banner, in_stock, stock_qty, stock_sold, categories(slug, name), product_images(kind, storage_path, alt, sort_order)",
+      "slug, name, brand, price_kes, discount_type, discount_value, warranty, badge, description, short_name, is_featured, show_in_hero, show_in_banner, in_stock, stock_qty, stock_sold, categories(slug, name), product_images(kind, storage_path, alt, sort_order)",
     )
     .order("created_at", { ascending: false })
     .order("name");
@@ -66,8 +69,9 @@ export async function getProducts(): Promise<Product[]> {
     name: row.name,
     brand: row.brand,
     category: row.categories,
-    priceKes: row.price_kes,
-    wasPriceKes: row.price_kes != null && row.was_price_kes != null && row.was_price_kes > row.price_kes ? row.was_price_kes : null,
+    // On sale, the shop (and the cart and checkout) use the sale price.
+    priceKes: salePrice(row.price_kes, row.discount_type, row.discount_value) ?? row.price_kes,
+    wasPriceKes: salePrice(row.price_kes, row.discount_type, row.discount_value) == null ? null : row.price_kes,
     warranty: row.warranty,
     badge: row.badge,
     description: row.description,
@@ -141,4 +145,35 @@ export async function getSitePage(slug: SitePageSlug): Promise<SitePage> {
     body: data?.body ?? "",
     updatedAt: data?.updated_at ?? null,
   };
+}
+
+/**
+ * Every approved review, newest first. Empty if they can't be read (for example before
+ * the reviews migration has been run), so product pages still work without them.
+ */
+export async function getReviews(): Promise<Review[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalog");
+
+  const { data, error } = await publicClient()
+    .from("product_reviews")
+    .select("id, name, rating, title, body, verified, created_at, products!inner(slug)")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(2000);
+  if (error) {
+    console.error(`Couldn't load reviews: ${error.message}`);
+    return [];
+  }
+  return (data as unknown as { id: string; name: string; rating: number; title: string | null; body: string; verified: boolean; created_at: string; products: { slug: string } }[]).map((row) => ({
+    id: row.id,
+    productSlug: row.products.slug,
+    name: row.name,
+    rating: row.rating,
+    title: row.title,
+    body: row.body,
+    verified: row.verified,
+    createdAt: row.created_at,
+  }));
 }

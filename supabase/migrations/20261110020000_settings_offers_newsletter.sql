@@ -1,5 +1,5 @@
--- Shop details and delivery fees the owner edits in the dashboard, "was" prices for
--- offers, and newsletter sign-ups. Safe to run more than once.
+-- Shop details and delivery fees the owner edits in the dashboard, product discounts,
+-- and newsletter sign-ups. Safe to run more than once.
 
 -- ----------------------------------------------------------------------------
 -- 1. Shop settings: a single row. Empty fields are left out of the site.
@@ -39,10 +39,20 @@ create policy "shop_settings_admin_update" on public.shop_settings
   for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- ----------------------------------------------------------------------------
--- 2. Offers: the price before the discount, shown crossed out.
+-- 2. Discounts: a percentage or an amount in shillings off price_kes. The shop shows
+--    the sale price with the original crossed out, and checkout charges the sale price.
 -- ----------------------------------------------------------------------------
+alter table public.products drop column if exists was_price_kes;   -- an earlier draft of this
 alter table public.products
-  add column if not exists was_price_kes integer check (was_price_kes is null or was_price_kes > 0);
+  add column if not exists discount_type text,
+  add column if not exists discount_value integer;
+
+alter table public.products drop constraint if exists products_discount_check;
+alter table public.products add constraint products_discount_check check (
+  (discount_type is null and discount_value is null)
+  or (discount_type = 'percent' and discount_value between 1 and 99)
+  or (discount_type = 'amount' and discount_value > 0)
+);
 
 -- ----------------------------------------------------------------------------
 -- 3. Newsletter sign-ups. Written only by the server; admins can read and remove them.

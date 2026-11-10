@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CardActions } from "@/components/card-actions";
-import { WasPrice } from "@/components/was-price";
+import { percentOff, WasPrice } from "@/components/was-price";
 import { QuickView } from "@/components/quick-view";
 import { priceText, productHref, type Product } from "@/lib/types";
+import { priceTone } from "@/lib/pricing";
 
 const CARD_SIZES = "(max-width: 560px) 100vw, (max-width: 900px) 50vw, 320px";
 
@@ -55,19 +56,25 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
             className={`object-contain p-[8%] transition-opacity duration-150 ${hover ? "group-hover:opacity-0" : ""}`}
           />
         )}
-        {product.badge && (
-          <span className="absolute top-0 right-0 rounded-sm bg-accent px-2 py-0.5 text-xs font-medium text-text">
-            {product.badge}
+        {product.wasPriceKes != null ? (
+          <span className="absolute top-0 right-0 rounded-sm bg-sale px-2 py-0.5 text-xs font-medium text-white uppercase">
+            Sale{percentOff(product) > 0 && ` −${percentOff(product)}%`}
           </span>
+        ) : (
+          product.badge && (
+            <span className="absolute top-0 right-0 rounded-sm bg-accent px-2 py-0.5 text-xs font-medium text-text">
+              {product.badge}
+            </span>
+          )
         )}
         <QuickView product={product} />
       </div>
 
       <div className="mt-auto flex min-h-[62px] flex-col gap-1 border-t border-line pt-3.5">
-        <strong className={`text-base font-medium whitespace-nowrap ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+        <strong className={`text-base font-medium whitespace-nowrap ${priceTone(product)}`}>
           {priceText(product)}
         </strong>
-        <WasPrice product={product} />
+        <WasPrice product={product} badge={false} />
         {product.warranty && <span className="text-xs text-muted">{product.warranty}</span>}
       </div>
 
@@ -91,7 +98,7 @@ export function ProductCardMini({ product }: { product: Product }) {
       </span>
       <span className="flex min-w-0 flex-col gap-1.5">
         <span className="line-clamp-2 text-sm leading-snug font-medium">{product.name}</span>
-        <span className={`text-[15px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+        <span className={`text-[15px] font-medium ${priceTone(product)}`}>
           {priceText(product)}
         </span>
         <WasPrice product={product} />
@@ -116,7 +123,7 @@ export function ProductCardRow({ product }: { product: Product }) {
       <span className="flex min-w-0 flex-col gap-2">
         <span className="text-xs text-muted uppercase">{product.category.name}</span>
         <span className="text-sm leading-snug font-medium">{product.name}</span>
-        <span className={`text-base font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+        <span className={`text-base font-medium ${priceTone(product)}`}>
           {priceText(product)}
         </span>
         <WasPrice product={product} />

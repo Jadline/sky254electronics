@@ -4,14 +4,15 @@ import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, PencilIcon, PhotoIcon, 
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { removeProduct, setProductPrice, setProductStock, setProductSwitch } from "@/app/admin/actions";
+import { useMemo, useOptimistic, useRef, useState, useTransition } from "react";
+import { removeProduct, setProductDiscount, setProductPrice, setProductStock, setProductSwitch } from "@/app/admin/actions";
 import { ConfirmDialog } from "@/components/admin/dialogs";
 import { paginate, Pager } from "@/components/admin/pager";
 import { RowMenu } from "@/components/admin/row-menu";
 import { SEARCH_BOX, SELECT_PILL } from "@/components/admin/ui";
 import { ActionNotice, useAdminAction, type Notice } from "@/components/admin/use-admin-action";
 import { LOW_STOCK } from "@/lib/inventory";
+import { salePrice, type DiscountType } from "@/lib/pricing";
 
 export type AdminProductRow = {
   id: string;
@@ -20,6 +21,8 @@ export type AdminProductRow = {
   brand: string | null;
   category: string;
   priceKes: number | null;
+  discountType: DiscountType | null;
+  discountValue: number | null;
   inStock: boolean;
   isActive: boolean;
   isFeatured: boolean;
@@ -33,6 +36,9 @@ export type AdminProductRow = {
 };
 
 const PAGE = 25;
+
+/** The price after the product's discount, or null when it has none. */
+const saleOf = (r: AdminProductRow) => salePrice(r.priceKes, r.discountType, r.discountValue);
 
 /** Stock - Sold for counted products; null when the stock isn't counted. */
 const remainingOf = (r: AdminProductRow) => (r.stockQty == null ? null : Math.max(0, r.stockQty - r.sold));
@@ -49,6 +55,7 @@ const FILTERS = [
       return left != null && left > 0 && left <= LOW_STOCK;
     },
   },
+  { id: "on-sale", label: "On sale", dot: "bg-[#d92d20]", test: (r: AdminProductRow) => saleOf(r) != null },
   { id: "no-price", label: "No price", dot: "bg-[#d97706]", test: (r: AdminProductRow) => r.priceKes == null },
   { id: "hidden", label: "Hidden", dot: "bg-adm-faint", test: (r: AdminProductRow) => !r.isActive },
   { id: "featured", label: "Featured", dot: "bg-adm-lavender-ink", test: (r: AdminProductRow) => r.isFeatured },
@@ -126,6 +133,78 @@ function PriceInput({ row, onNotice }: { row: AdminProductRow; onNotice: (n: Not
         className="w-full min-w-0 bg-transparent text-right text-sm font-semibold outline-0 placeholder:font-normal placeholder:text-[#b42318]"
       />
     </label>
+  );
+}
+
+/** The discount, typed straight into the table: a number and % or KSh. Blank removes it. */
+function DiscountInput({ row, onNotice }: { row: AdminProductRow; onNotice: (n: Notice) => void }) {
+  const [pending, startTransition] = useTransition();
+  const [bad, setBad] = useState(false);
+  const [type, setType] = useState<DiscountType>(row.discountType ?? "percent");
+  const input = useRef<HTMLInputElement>(null);
+  const saved = row.discountValue == null ? "" : String(row.discountValue);
+
+  function save(rawValue: string, nextType: DiscountType) {
+    const value = rawValue.replace(/[,\s%]/g, "");
+    // Nothing to do: the same discount, or switching % and KSh with no number yet.
+    if (value === saved && (nextType === (row.discountType ?? "percent") || value === "")) return;
+    startTransition(async () => {
+      const result = await setProductDiscount(row.id, nextType, value);
+      setBad(Boolean(result.error));
+      onNotice(result.error ? { tone: "error", text: `${row.name}: ${result.error}` } : { tone: "ok", text: `${row.name}: ${result.message}` });
+    });
+  }
+
+  return (
+    <span
+      className={`ml-auto flex h-10 w-[118px] items-center overflow-hidden rounded-[10px] border bg-white focus-within:ring-2 focus-within:ring-adm-primary/20 ${bad ? "border-[#b42318]" : "border-adm-line-strong focus-within:border-adm-primary"}`}
+    >
+      <input
+        ref={input}
+        defaultValue={saved}
+        inputMode="numeric"
+        placeholder="—"
+        aria-label={`Discount for ${row.name}`}
+        aria-invalid={bad || undefined}
+        disabled={pending}
+        onBlur={(e) => save(e.currentTarget.value, type)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Escape") {
+            e.currentTarget.value = saved;
+            e.currentTarget.blur();
+          }
+        }}
+        className="h-full w-full min-w-0 bg-transparent px-2.5 text-right text-sm font-semibold outline-0 placeholder:font-normal placeholder:text-adm-faint"
+      />
+      <select
+        value={type}
+        disabled={pending}
+        aria-label={`Discount type for ${row.name}`}
+        onChange={(e) => {
+          const next = e.target.value as DiscountType;
+          setType(next);
+          save(input.current?.value ?? "", next);
+        }}
+        className="h-full flex-none cursor-pointer border-l border-adm-line-soft bg-adm-surface px-1.5 text-xs font-semibold text-adm-body outline-0"
+      >
+        <option value="percent">%</option>
+        <option value="amount">KSh</option>
+      </select>
+    </span>
+  );
+}
+
+/** What customers pay: the sale price in red when discounted, else the price. */
+function CurrentPrice({ row }: { row: AdminProductRow }) {
+  if (row.priceKes == null) return <span className="text-adm-faint">—</span>;
+  const sale = saleOf(row);
+  if (sale == null) return <span className="tabular-nums text-adm-body">KSh {row.priceKes.toLocaleString("en-KE")}</span>;
+  return (
+    <span className="flex flex-col items-end leading-tight">
+      <span className="font-semibold tabular-nums text-[#d92d20]">KSh {sale.toLocaleString("en-KE")}</span>
+      <s className="text-xs tabular-nums text-adm-faint">KSh {row.priceKes.toLocaleString("en-KE")}</s>
+    </span>
   );
 }
 
@@ -305,7 +384,7 @@ export function ProductTable({ rows, initialFilter }: { rows: AdminProductRow[];
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-left text-sm">
+          <table className="w-full min-w-[1300px] text-left text-sm">
             <thead className="bg-[#f8fafd] text-xs tracking-[0.6px] text-adm-muted uppercase">
               <tr>
                 <th scope="col" className="py-3 pr-3 pl-[18px] font-semibold">
@@ -313,6 +392,12 @@ export function ProductTable({ rows, initialFilter }: { rows: AdminProductRow[];
                 </th>
                 <th scope="col" className="px-3 py-3 text-right font-semibold">
                   Price
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold" title="A percentage or shillings off the price">
+                  Discount
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold" title="What customers pay">
+                  Current price
                 </th>
                 <th scope="col" className="px-3 py-3 text-right font-semibold" title="How many you had when you last typed it in. Type a new number after a delivery or a recount.">
                   Stock
@@ -365,6 +450,12 @@ export function ProductTable({ rows, initialFilter }: { rows: AdminProductRow[];
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <PriceInput row={r} onNotice={setPriceNotice} />
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <DiscountInput key={`${r.discountType}-${r.discountValue}`} row={r} onNotice={setPriceNotice} />
+                    </td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      <CurrentPrice row={r} />
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <StockInput row={r} onNotice={setPriceNotice} />

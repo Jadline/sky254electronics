@@ -3,8 +3,10 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { after } from "next/server";
 import { getShopSettings } from "@/lib/catalog";
+import { checkCoupon } from "@/lib/coupon-check";
 import { sendCustomerUpdate, sendOrderAlert } from "@/lib/notify";
 import { DELIVERY_METHODS, normalisePhone, type DeliveryMethod } from "@/lib/order-labels";
+import { salePrice } from "@/lib/pricing";
 import { deliveryFee } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -18,6 +20,9 @@ export type CheckoutInput = {
   deliveryMethod: string;
   address: string;
   notes: string;
+  /** A coupon code, if the customer applied one, and the discount they were shown for it. */
+  couponCode?: string;
+  expectedDiscount?: number;
   /** A hidden field people never fill in, to catch simple bots. */
   website: string;
 };
@@ -90,7 +95,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   // Every name and price comes from the database, never from the browser.
   const { data: products, error: productError } = await db
     .from("products")
-    .select("id, slug, name, price_kes, in_stock, is_active, stock_qty, stock_sold")
+    .select("id, slug, name, price_kes, discount_type, discount_value, in_stock, is_active, stock_qty, stock_sold")
     .in("slug", [...wanted.keys()]);
   if (productError) return { ok: false, error: "We couldn't place your order. Please try again." };
 
@@ -108,12 +113,14 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     if (remaining != null && remaining < qty) {
       return { ok: false, error: `Only ${remaining} of ${product.name} left. Please lower the quantity in your cart.` };
     }
+    // Discounted products sell at their sale price, worked out here from the database.
+    const price = salePrice(product.price_kes, product.discount_type, product.discount_value) ?? product.price_kes;
     lines.push({
       product_id: product.id,
       product_name: product.name,
-      price_kes: product.price_kes,
+      price_kes: price,
       qty,
-      line_total_kes: product.price_kes * qty,
+      line_total_kes: price * qty,
     });
   }
 
@@ -123,8 +130,24 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "A price in your cart has changed. Please check the new total and try again." };
   }
 
+  // A coupon is checked again here, against the real prices and its use limits.
+  let discount = 0;
+  let couponCode: string | null = null;
+  const rawCoupon = clean(input.couponCode, 40);
+  if (rawCoupon) {
+    const coupon = await checkCoupon(rawCoupon, subtotal, phone);
+    if (!coupon.ok) return { ok: false, error: coupon.error, field: "coupon" };
+    if (coupon.discountKes !== input.expectedDiscount) {
+      return { ok: false, error: "Your coupon's discount has changed. Please check the new total and try again.", field: "coupon" };
+    }
+    discount = coupon.discountKes;
+    couponCode = coupon.code;
+  }
+  const payable = subtotal - discount;
+
   // The fee comes from Shop settings. null means the shop confirms it when they call.
-  const fee = deliveryFee(deliveryMethod, subtotal, (await getShopSettings()).delivery);
+  // Free delivery is judged on what's paid after the coupon, so a code can't unlock it.
+  const fee = deliveryFee(deliveryMethod, payable, (await getShopSettings()).delivery);
   const token = randomBytes(24).toString("base64url");
   let order: { id: string; order_number: string } | null = null;
   for (let attempt = 0; attempt < 5 && !order; attempt++) {
@@ -142,7 +165,9 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         notes: notes || null,
         subtotal_kes: subtotal,
         delivery_fee_kes: fee,
-        total_kes: subtotal + (fee ?? 0),
+        total_kes: payable + (fee ?? 0),
+        // Only sent with a coupon, so checkout still works before the coupons migration is run.
+        ...(couponCode && { coupon_code: couponCode, discount_kes: discount }),
       })
       .select("id, order_number")
       .single();
@@ -170,6 +195,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       deliveryAddress: DELIVERY_METHODS[deliveryMethod].needsAddress ? address : null,
       notes: notes || null,
       subtotalKes: subtotal,
+      discountKes: discount,
+      couponCode,
       deliveryFeeKes: fee,
       adminUrl: `${process.env.SITE_URL ?? ""}/admin/orders/${placed.id}`,
       items: lines.map((line) => ({ name: line.product_name, qty: line.qty, lineTotalKes: line.line_total_kes })),
@@ -183,7 +210,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       orderNumber: placed.order_number,
       customerName: name,
       customerEmail: email || null,
-      totalKes: subtotal + (fee ?? 0),
+      totalKes: payable + (fee ?? 0),
       deliveryConfirmed: fee != null,
       token,
     }),

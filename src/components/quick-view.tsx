@@ -7,6 +7,7 @@ import { CloseIcon } from "@/components/icons";
 import { ImageSlider } from "@/components/image-slider";
 import { categoryHref, priceText, type Product } from "@/lib/types";
 import { WasPrice } from "@/components/was-price";
+import { priceTone } from "@/lib/pricing";
 
 export function QuickView({ product }: { product: Product }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -52,7 +53,7 @@ export function QuickView({ product }: { product: Product }) {
 
             <div className="flex flex-[1_1_380px] flex-col gap-[18px] p-[30px] max-sm:p-5">
               <h2 className="pr-12 text-3xl leading-tight font-medium text-brand max-sm:text-2xl">{product.name}</h2>
-              <strong className={`text-2xl font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+              <strong className={`text-2xl font-medium ${priceTone(product)}`}>
                 {priceText(product)}
               </strong>
               <WasPrice product={product} className="-mt-3" />

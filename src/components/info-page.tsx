@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ContactForm } from "@/components/contact-form";
 import { breadcrumbJsonLd, JsonLd } from "@/components/json-ld";
 import { PageHeading } from "@/components/page-heading";
 import { blocksToPlainText, faqPairs, RichText, blocksToSource } from "@/components/rich-text";
@@ -138,6 +139,7 @@ export async function InfoPage({ slug }: { slug: SitePageSlug }) {
           {slug === "contact" && <ContactDetails settings={settings} />}
           {slug === "faqs" ? <Faqs body={page.body} /> : page.body && <RichText source={page.body} />}
           {slug === "delivery" && <DeliveryFees settings={settings} />}
+          {slug === "contact" && <ContactForm />}
           {page.updatedAt && (slug === "privacy" || slug === "terms" || slug === "returns") && (
             <p className="text-xs text-muted">
               Last updated{" "}

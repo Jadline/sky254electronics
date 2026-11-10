@@ -7,6 +7,7 @@ import { CloseIcon } from "@/components/icons";
 import { toggleWishlist, useShop } from "@/lib/shop-store";
 import { priceText, productHref, type Product } from "@/lib/types";
 import { WasPrice } from "@/components/was-price";
+import { priceTone } from "@/lib/pricing";
 
 export function WishlistView({ products }: { products: Product[] }) {
   const { wishlist } = useShop();
@@ -49,7 +50,7 @@ export function WishlistView({ products }: { products: Product[] }) {
               <Link href={productHref(product.slug)} className="text-[17px] font-medium transition-colors hover:text-brand">
                 {product.name}
               </Link>
-              <span className={`text-[17px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
+              <span className={`text-[17px] font-medium ${priceTone(product)}`}>
                 {priceText(product)}
               </span>
               <WasPrice product={product} />

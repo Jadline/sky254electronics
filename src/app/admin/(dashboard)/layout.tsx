@@ -5,19 +5,22 @@ import { LiveRefresh } from "@/components/admin/live-refresh";
 import { initials } from "@/components/admin/ui";
 import { adminName, getAdmin } from "@/lib/admin-auth";
 
-/** Sidebar counts: new orders waiting to be confirmed, and failed M-Pesa payments on live orders. */
+/** Sidebar counts: new orders waiting to be confirmed, failed M-Pesa payments on live orders, unread enquiries, and reviews waiting for approval. */
 const loadBadges = cache(async () => {
   const admin = await getAdmin();
-  if (!admin) return { orders: 0, payments: 0 };
+  if (!admin) return { orders: 0, payments: 0, enquiries: 0, reviews: 0 };
   const count = { count: "exact" as const, head: true };
-  const [orders, payments] = await Promise.all([
+  const [orders, payments, enquiries, reviews] = await Promise.all([
     admin.supabase.from("orders").select("id", count).eq("status", "pending"),
     admin.supabase.from("orders").select("id", count).eq("payment_status", "failed").neq("status", "cancelled"),
+    admin.supabase.from("enquiries").select("id", count).eq("status", "new"),
+    admin.supabase.from("product_reviews").select("id", count).eq("status", "pending"),
   ]);
-  return { orders: orders.count ?? 0, payments: payments.count ?? 0 };
+  // Enquiries and reviews read 0 until their migrations have been run.
+  return { orders: orders.count ?? 0, payments: payments.count ?? 0, enquiries: enquiries.count ?? 0, reviews: reviews.count ?? 0 };
 });
 
-async function Count({ kind }: { kind: "orders" | "payments" }) {
+async function Count({ kind }: { kind: "orders" | "payments" | "enquiries" | "reviews" }) {
   const badges = await loadBadges();
   return <NavCount count={badges[kind]} />;
 }
@@ -62,6 +65,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         payments: (
           <Suspense fallback={null}>
             <Count kind="payments" />
+          </Suspense>
+        ),
+        enquiries: (
+          <Suspense fallback={null}>
+            <Count kind="enquiries" />
+          </Suspense>
+        ),
+        reviews: (
+          <Suspense fallback={null}>
+            <Count kind="reviews" />
           </Suspense>
         ),
       }}

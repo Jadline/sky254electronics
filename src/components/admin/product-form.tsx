@@ -29,7 +29,8 @@ export type ProductFormValues = {
   brand?: string | null;
   category_id?: string;
   price_kes?: number | null;
-  was_price_kes?: number | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
   warranty?: string | null;
   badge?: string | null;
   description?: string | null;
@@ -372,14 +373,20 @@ export function ProductForm({
                   className={INPUT}
                 />
               </Field>
-              <Field label="Was price (KES)" hint="For offers: the old price, shown crossed out with the saving. Leave blank when not on offer.">
-                <input
-                  name="was_price_kes"
-                  inputMode="numeric"
-                  defaultValue={values.was_price_kes ?? ""}
-                  placeholder="e.g. 25000"
-                  className={INPUT}
-                />
+              <Field label="Discount" hint="A percentage or shillings off the price. The shop shows a Sale badge, the price crossed out and the new price. Leave blank for none.">
+                <span className="flex gap-2">
+                  <input
+                    name="discount_value"
+                    inputMode="numeric"
+                    defaultValue={values.discount_value ?? ""}
+                    placeholder="e.g. 10"
+                    className={`${INPUT} min-w-0 flex-1`}
+                  />
+                  <select name="discount_type" defaultValue={values.discount_type ?? "percent"} aria-label="Discount type" className={`${INPUT} w-[92px] flex-none`}>
+                    <option value="percent">%</option>
+                    <option value="amount">KSh</option>
+                  </select>
+                </span>
               </Field>
               <Field label="Warranty">
                 <input

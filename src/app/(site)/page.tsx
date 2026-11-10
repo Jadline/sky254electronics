@@ -6,7 +6,8 @@ import { ChevronRightIcon } from "@/components/icons";
 import { ProductCard, ProductCardMini, ProductCardRow } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
 import { site } from "@/config/site";
-import { getCategories, getProducts, getShopSettings } from "@/lib/catalog";
+import { getCategories, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
+import { Stars } from "@/components/product/stars";
 import { categoryHref, formatKes, priceText, productHref, type Product } from "@/lib/types";
 import { MAX_BANNERS, MAX_SLIDER } from "@/lib/home-rules";
 import type { Metadata } from "next";
@@ -47,7 +48,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export default async function Home() {
-  const [products, categories, settings] = await Promise.all([getProducts(), getCategories(), getShopSettings()]);
+  const [products, categories, settings, reviews] = await Promise.all([getProducts(), getCategories(), getShopSettings(), getReviews()]);
 
   // Newest first. Sold-out products stay in the shop but not on the Home page.
   const live = products.filter((p) => p.inStock);
@@ -93,6 +94,13 @@ export default async function Home() {
   const brandCounts = new Map<string, number>();
   live.forEach((p) => p.brand && brandCounts.set(p.brand, (brandCounts.get(p.brand) ?? 0) + 1));
   const brands = [...brandCounts].sort((a, b) => b[1] - a[1]).slice(0, 9).map(([brand]) => brand);
+
+  // Testimonials: the newest approved reviews that are glowing and say something.
+  const testimonials = reviews
+    .filter((r) => r.rating >= 4 && r.body.length >= 40)
+    .map((r) => ({ review: r, product: products.find((p) => p.slug === r.productSlug) }))
+    .filter((t) => t.product)
+    .slice(0, 3);
 
   const more = withPhoto.filter((p) => !newestSlugs.has(p.slug)).slice(0, 8);
   const shopPhoto = products.find((p) => p.slug === "lg-234l-top-freezer-fridge")?.boxPhoto;
@@ -301,6 +309,25 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      {testimonials.length > 0 && (
+        <section aria-labelledby="testimonials-h" className="reveal flex flex-col gap-[26px]">
+          <h2 id="testimonials-h" className="border-b border-line pb-3.5 text-base font-medium">What customers say</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[30px]">
+            {testimonials.map(({ review, product }) => (
+              <figure key={review.id} className="flex flex-col gap-3 bg-tint px-6 py-[26px]">
+                <Stars rating={review.rating} />
+                <blockquote className="line-clamp-5 text-[15px] leading-relaxed text-body">“{review.body}”</blockquote>
+                <figcaption className="mt-auto text-[13px] text-muted">
+                  <strong className="font-medium text-text">{review.name}</strong>
+                  {review.verified && " · Verified buyer"} · on{" "}
+                  <Link href={productHref(product!.slug)} className="text-brand hover:underline">{product!.shortName ?? product!.name}</Link>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       {brands.length > 0 && (
         <section aria-label="Brands we stock" className="reveal flex flex-wrap items-center justify-around gap-x-10 gap-y-6 border border-line px-5 py-[34px]">
