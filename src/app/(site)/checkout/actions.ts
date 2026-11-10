@@ -2,8 +2,10 @@
 
 import { randomBytes, randomInt } from "node:crypto";
 import { after } from "next/server";
-import { sendOrderAlert } from "@/lib/notify";
-import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/order-labels";
+import { getShopSettings } from "@/lib/catalog";
+import { sendCustomerUpdate, sendOrderAlert } from "@/lib/notify";
+import { DELIVERY_METHODS, normalisePhone, type DeliveryMethod } from "@/lib/order-labels";
+import { deliveryFee } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CheckoutInput = {
@@ -20,22 +22,13 @@ export type CheckoutInput = {
   website: string;
 };
 
-export type CheckoutResult = { ok: true; token: string } | { ok: false; error: string; field?: string };
+export type CheckoutResult = { ok: true; token: string; orderNumber: string } | { ok: false; error: string; field?: string };
 
 const MAX_ORDERS_PER_PHONE = 5;
 const RATE_WINDOW_MINUTES = 10;
 const ORDER_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // no 0/O or 1/I/L, easy to read over the phone
 
 const clean = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
-
-/** Kenyan mobile numbers, stored as 2547XXXXXXXX or 2541XXXXXXXX. */
-function normalisePhone(raw: string) {
-  const digits = raw.replace(/[\s()-]/g, "").replace(/^\+/, "");
-  if (/^0[17]\d{8}$/.test(digits)) return "254" + digits.slice(1);
-  if (/^[17]\d{8}$/.test(digits)) return "254" + digits;
-  if (/^254[17]\d{8}$/.test(digits)) return digits;
-  return null;
-}
 
 function orderNumber() {
   let code = "";
@@ -97,7 +90,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   // Every name and price comes from the database, never from the browser.
   const { data: products, error: productError } = await db
     .from("products")
-    .select("id, slug, name, price_kes, in_stock, is_active")
+    .select("id, slug, name, price_kes, in_stock, is_active, stock_qty, stock_sold")
     .in("slug", [...wanted.keys()]);
   if (productError) return { ok: false, error: "We couldn't place your order. Please try again." };
 
@@ -109,6 +102,11 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         ok: false,
         error: `${product?.name ?? "An item in your cart"} is no longer available. Please remove it from your cart.`,
       };
+    }
+    // Stock is only taken when the shop confirms the order, but don't accept more than remain.
+    const remaining = product.stock_qty == null ? null : product.stock_qty - product.stock_sold;
+    if (remaining != null && remaining < qty) {
+      return { ok: false, error: `Only ${remaining} of ${product.name} left. Please lower the quantity in your cart.` };
     }
     lines.push({
       product_id: product.id,
@@ -125,6 +123,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "A price in your cart has changed. Please check the new total and try again." };
   }
 
+  // The fee comes from Shop settings. null means the shop confirms it when they call.
+  const fee = deliveryFee(deliveryMethod, subtotal, (await getShopSettings()).delivery);
   const token = randomBytes(24).toString("base64url");
   let order: { id: string; order_number: string } | null = null;
   for (let attempt = 0; attempt < 5 && !order; attempt++) {
@@ -141,7 +141,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         delivery_address: DELIVERY_METHODS[deliveryMethod].needsAddress ? address : null,
         notes: notes || null,
         subtotal_kes: subtotal,
-        total_kes: subtotal,
+        delivery_fee_kes: fee,
+        total_kes: subtotal + (fee ?? 0),
       })
       .select("id, order_number")
       .single();
@@ -169,10 +170,24 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       deliveryAddress: DELIVERY_METHODS[deliveryMethod].needsAddress ? address : null,
       notes: notes || null,
       subtotalKes: subtotal,
+      deliveryFeeKes: fee,
       adminUrl: `${process.env.SITE_URL ?? ""}/admin/orders/${placed.id}`,
       items: lines.map((line) => ({ name: line.product_name, qty: line.qty, lineTotalKes: line.line_total_kes })),
     }),
   );
 
-  return { ok: true, token };
+  // Email the customer (if they gave an address) that the order arrived.
+  after(() =>
+    sendCustomerUpdate({
+      event: "pending",
+      orderNumber: placed.order_number,
+      customerName: name,
+      customerEmail: email || null,
+      totalKes: subtotal + (fee ?? 0),
+      deliveryConfirmed: fee != null,
+      token,
+    }),
+  );
+
+  return { ok: true, token, orderNumber: placed.order_number };
 }

@@ -6,6 +6,7 @@ import { AddToCartButton } from "@/components/card-actions";
 import { CloseIcon } from "@/components/icons";
 import { toggleWishlist, useShop } from "@/lib/shop-store";
 import { priceText, productHref, type Product } from "@/lib/types";
+import { WasPrice } from "@/components/was-price";
 
 export function WishlistView({ products }: { products: Product[] }) {
   const { wishlist } = useShop();
@@ -51,6 +52,7 @@ export function WishlistView({ products }: { products: Product[] }) {
               <span className={`text-[17px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
                 {priceText(product)}
               </span>
+              <WasPrice product={product} />
             </div>
             <div className="flex flex-[0_1_300px] flex-col justify-center gap-2.5 px-5 py-[18px] max-md:flex-[1_1_100%]">
               <span className="font-medium">{product.inStock ? "In stock" : "Sold out"}</span>

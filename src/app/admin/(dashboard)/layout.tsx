@@ -1,39 +1,75 @@
-import Link from "next/link";
-import { logout } from "@/app/admin/actions";
+import { cache, Suspense } from "react";
+import { AdminShell, NavCount } from "@/components/admin/admin-shell";
+import { LiveUpdates } from "@/components/live-updates";
+import { LiveRefresh } from "@/components/admin/live-refresh";
+import { initials } from "@/components/admin/ui";
+import { adminName, getAdmin } from "@/lib/admin-auth";
 
-const LINKS = [
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin", label: "Products" },
-  { href: "/admin/products/new", label: "Add product" },
-  { href: "/admin/categories", label: "Categories" },
-  { href: "/admin/account", label: "Account" },
-];
+/** Sidebar counts: new orders waiting to be confirmed, and failed M-Pesa payments on live orders. */
+const loadBadges = cache(async () => {
+  const admin = await getAdmin();
+  if (!admin) return { orders: 0, payments: 0 };
+  const count = { count: "exact" as const, head: true };
+  const [orders, payments] = await Promise.all([
+    admin.supabase.from("orders").select("id", count).eq("status", "pending"),
+    admin.supabase.from("orders").select("id", count).eq("payment_status", "failed").neq("status", "cancelled"),
+  ]);
+  return { orders: orders.count ?? 0, payments: payments.count ?? 0 };
+});
 
-// The shell holds no data. Each page checks the user is an admin before loading anything.
+async function Count({ kind }: { kind: "orders" | "payments" }) {
+  const badges = await loadBadges();
+  return <NavCount count={badges[kind]} />;
+}
+
+async function SignedInAs() {
+  const admin = await getAdmin();
+  if (!admin) return null;
+  const name = adminName(admin.user);
+  return (
+    <span className="flex min-w-0 items-center gap-2.5">
+      <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-adm-primary text-sm font-semibold text-white">
+        {initials(name)}
+      </span>
+      <span className="flex min-w-0 flex-col leading-tight">
+        <span className="truncate text-sm font-semibold">{name}</span>
+        <span className="truncate text-[13px] text-adm-muted" title={admin.user.email}>
+          {admin.user.email}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * The shell is static, so it shows at once. Anything that reads the login (the badges and the
+ * name) streams in behind its own boundary, and every page checks the admin itself.
+ */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <header className="bg-ink text-white">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-x-8 gap-y-2 px-6 py-3.5">
-          <Link href="/admin" className="text-xl font-bold tracking-tight">
-            Sky<span className="text-accent">254</span> <span className="text-sm font-normal text-on-ink">Admin</span>
-          </Link>
-          <nav aria-label="Dashboard" className="flex flex-1 flex-wrap gap-x-6 gap-y-1 text-sm">
-            {LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="text-on-ink transition-colors hover:text-white">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-5 text-sm">
-            <Link href="/" className="text-on-ink transition-colors hover:text-white">View shop</Link>
-            <form action={logout}>
-              <button type="submit" className="cursor-pointer text-on-ink transition-colors hover:text-white">Sign out</button>
-            </form>
-          </div>
-        </div>
-      </header>
-      <div className="mx-auto w-full max-w-[1400px] flex-1 px-6 py-8">{children}</div>
-    </>
+    <AdminShell
+      user={
+        <Suspense fallback={<span className="block h-9" />}>
+          <SignedInAs />
+        </Suspense>
+      }
+      badges={{
+        orders: (
+          <Suspense fallback={null}>
+            <Count kind="orders" />
+          </Suspense>
+        ),
+        payments: (
+          <Suspense fallback={null}>
+            <Count kind="payments" />
+          </Suspense>
+        ),
+      }}
+    >
+      {/* New orders and changes saved in another tab show up without a reload. */}
+      <LiveRefresh everySeconds={30} />
+      <LiveUpdates topic="catalog" />
+      {children}
+    </AdminShell>
   );
 }

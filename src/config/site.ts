@@ -1,19 +1,21 @@
-// Shop details shown around the site. Replace the [bracketed] placeholders.
+// Fixed shop details used around the site. Email, address, hours, social links and
+// delivery fees are edited in the dashboard under Shop settings (lib/catalog.ts: getShopSettings).
 export const site = {
   name: "Sky254 Electronics",
-  phone: "[0700 000 000]",
+  phone: "+254 116 236902",
   /** Digits only with country code, e.g. "254700000000". Null hides WhatsApp links. */
-  whatsapp: null as string | null,
-  email: "[hello@sky254.co.ke]",
-  address: "[Shop address]",
-  hours: "Open Mon–Sat, [8am – 7pm]",
-  /** Add a full URL to show that social link. */
-  social: {
-    facebook: null as string | null,
-    instagram: null as string | null,
-    tiktok: null as string | null,
-  },
+  whatsapp: "254116236902" as string | null,
 };
+
+/**
+ * The site's public address with no trailing slash, from SITE_URL (the same value
+ * M-Pesa uses). Canonical links, the sitemap, structured data and the product feed
+ * are built from it, so set it to the live https address before launch.
+ */
+export const siteUrl = (process.env.SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
+/** An absolute link to a path on this site, e.g. absoluteUrl("/shop"). */
+export const absoluteUrl = (path: string) => (/^https?:\/\//.test(path) ? path : `${siteUrl}${path.startsWith("/") ? "" : "/"}${path}`);
 
 export function whatsappLink(message: string) {
   return site.whatsapp

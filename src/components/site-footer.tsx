@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { site, whatsappLink } from "@/config/site";
-import { getCategories } from "@/lib/catalog";
+import { getCategories, getShopSettings } from "@/lib/catalog";
 import { categoryHref } from "@/lib/types";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ChatIcon, ChevronUpIcon } from "@/components/icons";
@@ -20,7 +20,6 @@ const COLUMNS = [
   {
     title: "Customer care",
     links: [
-      ["My account", "/login"],
       ["Track my order", "/track-order"],
       ["Wishlist", "/wishlist"],
       ["Returns & warranty", "/returns"],
@@ -35,7 +34,7 @@ const PAYMENTS = [
 ];
 
 export async function SiteFooter() {
-  const categories = await getCategories();
+  const [categories, settings] = await Promise.all([getCategories(), getShopSettings()]);
   const columns = [
     {
       title: "Find it fast",
@@ -45,9 +44,9 @@ export async function SiteFooter() {
   ];
   const whatsapp = whatsappLink("Hi Sky254!");
   const social = [
-    { label: "Facebook", href: site.social.facebook, text: "f" },
-    { label: "Instagram", href: site.social.instagram, text: "ig" },
-    { label: "TikTok", href: site.social.tiktok, text: "tt" },
+    { label: "Facebook", href: settings.social.facebook, text: "f" },
+    { label: "Instagram", href: settings.social.instagram, text: "ig" },
+    { label: "TikTok", href: settings.social.tiktok, text: "tt" },
     { label: "WhatsApp", href: whatsapp, text: null },
   ].filter((link) => link.href);
 
@@ -58,10 +57,17 @@ export async function SiteFooter() {
           <span className="mb-[18px] text-3xl font-bold tracking-tight text-white">
             Sky<span className="text-accent">254</span>
           </span>
-          <span>{site.address}, Nairobi, Kenya</span>
+          <span>{settings.address ? `${settings.address}, Nairobi, Kenya` : "Nairobi, Kenya"}</span>
           <span>Phone / WhatsApp: {site.phone}</span>
-          <span>Email: {site.email}</span>
-          <span>{site.hours}</span>
+          {settings.email && (
+            <span>
+              Email:{" "}
+              <a href={`mailto:${settings.email}`} className="hover:text-white">
+                {settings.email}
+              </a>
+            </span>
+          )}
+          {settings.hours && <span>{settings.hours}</span>}
           <div className="mt-[22px] mb-[18px] h-px bg-white/15" />
           <span>
             © 2026 <span className="text-accent">{site.name}</span>. All rights reserved.

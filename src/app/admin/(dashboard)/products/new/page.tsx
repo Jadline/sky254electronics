@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ProductForm } from "@/components/admin/product-form";
+import { Loading } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Add product" };
@@ -11,16 +12,13 @@ async function NewProduct() {
   return <ProductForm categories={categories ?? []} />;
 }
 
+/** The form draws its own header, with the Cancel, Save as draft and Publish buttons. */
 export default function NewProductPage() {
   return (
-    <main className="flex max-w-4xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-medium">Add product</h1>
-        <p className="text-sm text-muted">You can add photos on the next step.</p>
-      </div>
-      <Suspense fallback={<p className="text-muted">Loading…</p>}>
+    <div className="pt-1">
+      <Suspense fallback={<Loading />}>
         <NewProduct />
       </Suspense>
-    </main>
+    </div>
   );
 }

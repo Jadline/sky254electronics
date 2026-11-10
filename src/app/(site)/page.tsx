@@ -6,8 +6,12 @@ import { ChevronRightIcon } from "@/components/icons";
 import { ProductCard, ProductCardMini, ProductCardRow } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
 import { site } from "@/config/site";
-import { getCategories, getProducts } from "@/lib/catalog";
+import { getCategories, getProducts, getShopSettings } from "@/lib/catalog";
 import { categoryHref, formatKes, priceText, productHref, type Product } from "@/lib/types";
+import { MAX_BANNERS, MAX_SLIDER } from "@/lib/home-rules";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // Everything below is chosen from live data. These lists only decide the layout:
 // which departments go in which block, and in what order.
@@ -43,7 +47,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export default async function Home() {
-  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+  const [products, categories, settings] = await Promise.all([getProducts(), getCategories(), getShopSettings()]);
 
   // Newest first. Sold-out products stay in the shop but not on the Home page.
   const live = products.filter((p) => p.inStock);
@@ -66,9 +70,10 @@ export default async function Home() {
     .map((p) => {
       const { light, bold } = splitTitle(p);
       return { label: p.category.name, title: light, strong: bold, price: priceText(p), href: productHref(p.slug), image: p.photo! };
-    });
+    })
+    .slice(0, MAX_SLIDER);
 
-  const banners = withPhoto.filter((p) => p.showInBanner);
+  const banners = withPhoto.filter((p) => p.showInBanner).slice(0, MAX_BANNERS);
   const [sideBanner, ...rowBanners] = banners;
 
   const under3000 = withPhoto.filter((p) => p.priceKes != null && p.priceKes < 3000).slice(0, 10);
@@ -281,7 +286,7 @@ export default async function Home() {
             <span className="text-xs text-brand">Nairobi</span>
             <strong className="text-[15px] leading-snug font-medium">Come see it in the box before you buy</strong>
             <span className="text-[13px] leading-relaxed text-muted">
-              {site.address} · {site.hours}
+              {[settings.address, settings.hours].filter(Boolean).join(" · ") || `Call ${site.phone} for directions`}
             </span>
           </div>
         </aside>

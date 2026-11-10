@@ -59,7 +59,7 @@ export async function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Link href="/login" className="text-[13px] transition-colors hover:text-brand max-lg:ml-auto">Login / Register</Link>
+        <Link href="/contact" className="text-[13px] transition-colors hover:text-brand max-lg:ml-auto">Help &amp; contact</Link>
       </div>
 
       <div className={`${CONTAINER} flex flex-wrap items-center gap-x-[30px] gap-y-3.5 pb-[18px]`}>

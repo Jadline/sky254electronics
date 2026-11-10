@@ -1,6 +1,46 @@
 import "server-only";
+import { site } from "@/config/site";
 import { DELIVERY_METHODS, formatPhone, type DeliveryMethod } from "@/lib/order-labels";
 import { formatKes } from "@/lib/types";
+
+// Every message here is best effort and never throws: the order is already saved and
+// shows in the dashboard, so a failed email must not fail the customer's order.
+
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+const siteUrl = () => (process.env.SITE_URL ?? "").replace(/\/$/, "");
+
+/**
+ * Sends an email through Mailgun. Does nothing until MAILGUN_API_KEY and MAILGUN_DOMAIN are
+ * set. MAILGUN_FROM is the sender, e.g. "Sky254 Electronics <orders@mg.sky254.co.ke>", and
+ * MAILGUN_REGION=eu uses Mailgun's EU servers for domains created there.
+ */
+async function sendEmail(to: string, subject: string, html: string, label: string) {
+  const apiKey = process.env.MAILGUN_API_KEY;
+  const domain = process.env.MAILGUN_DOMAIN;
+  if (!apiKey || !domain) return;
+  const host = process.env.MAILGUN_REGION === "eu" ? "api.eu.mailgun.net" : "api.mailgun.net";
+  const body = new URLSearchParams({
+    from: process.env.MAILGUN_FROM || `${site.name} <orders@${domain}>`,
+    to,
+    subject,
+    html,
+  });
+  try {
+    const response = await fetch(`https://${host}/v3/${domain}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString("base64")}` },
+      body,
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) console.error(`${label} email failed: HTTP ${response.status}`);
+  } catch {
+    console.error(`${label} email failed`);
+  }
+}
+
+// ---------- To the shop ----------
 
 type OrderAlert = {
   orderNumber: string;
@@ -10,49 +50,92 @@ type OrderAlert = {
   deliveryAddress: string | null;
   notes: string | null;
   subtotalKes: number;
+  /** null = to be confirmed by phone. */
+  deliveryFeeKes: number | null;
   adminUrl: string;
   items: { name: string; qty: number; lineTotalKes: number }[];
 };
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-
-/**
- * Emails the shop about a new order through Resend. Does nothing until
- * RESEND_API_KEY and ORDER_ALERT_EMAIL are set. Never throws: a failed alert must
- * not fail the customer's order, which is already saved and shows in the dashboard.
- */
+/** Emails the shop about a new order. Does nothing until Mailgun (see sendEmail) and ORDER_ALERT_EMAIL are set. */
 export async function sendOrderAlert(order: OrderAlert) {
-  const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.ORDER_ALERT_EMAIL;
-  if (!apiKey || !to) return;
+  if (!to) return;
 
   const rows = order.items
     .map((item) => `<li>${item.qty} x ${escapeHtml(item.name)}: ${formatKes(item.lineTotalKes)}</li>`)
     .join("");
+  const total =
+    order.deliveryFeeKes == null
+      ? `Subtotal: ${formatKes(order.subtotalKes)}</strong> (delivery to be confirmed)`
+      : `Total: ${formatKes(order.subtotalKes + order.deliveryFeeKes)}</strong> (delivery ${order.deliveryFeeKes ? formatKes(order.deliveryFeeKes) : "free"})`;
   const html = `
     <h2>New order ${escapeHtml(order.orderNumber)}</h2>
     <p><strong>${escapeHtml(order.customerName)}</strong>, ${escapeHtml(formatPhone(order.customerPhone))}</p>
     <p>${escapeHtml(DELIVERY_METHODS[order.deliveryMethod].label)}${order.deliveryAddress ? `: ${escapeHtml(order.deliveryAddress)}` : ""}</p>
     <ul>${rows}</ul>
-    <p><strong>Subtotal: ${formatKes(order.subtotalKes)}</strong> (delivery to be confirmed)</p>
+    <p><strong>${total}</p>
     ${order.notes ? `<p>Notes: ${escapeHtml(order.notes)}</p>` : ""}
     <p><a href="${escapeHtml(order.adminUrl)}">Open this order in the dashboard</a></p>`;
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.ORDER_ALERT_FROM || "Sky254 Orders <onboarding@resend.dev>",
-        to: [to],
-        subject: `New order ${order.orderNumber}: ${formatKes(order.subtotalKes)}`,
-        html,
-      }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) console.error(`Order alert failed for ${order.orderNumber}: HTTP ${response.status}`);
-  } catch {
-    console.error(`Order alert failed for ${order.orderNumber}`);
-  }
+  await sendEmail(
+    to,
+    `New order ${order.orderNumber}: ${formatKes(order.subtotalKes + (order.deliveryFeeKes ?? 0))}`,
+    html,
+    `Order alert for ${order.orderNumber}`,
+  );
+}
+
+// ---------- To the customer ----------
+
+/**
+ * The two moments a customer is emailed: when the order arrives, and when it's on its way.
+ * Everything else they can follow on their order page or at /track-order.
+ */
+export type CustomerEmailEvent = "pending" | "out_for_delivery";
+
+export type CustomerUpdate = {
+  /** "pending" is a newly placed order. */
+  event: CustomerEmailEvent;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string | null;
+  totalKes: number;
+  /** False while the delivery fee is still to be confirmed. */
+  deliveryConfirmed: boolean;
+  /** The private link to the customer's order page. */
+  token: string;
+};
+
+/** Emails the customer about their order, when they gave an email address at checkout. */
+export async function sendCustomerUpdate(u: CustomerUpdate) {
+  if (!u.customerEmail) return;
+  const first = escapeHtml(u.customerName.split(" ")[0]);
+  const number = escapeHtml(u.orderNumber);
+  const total = `${formatKes(u.totalKes)}${u.deliveryConfirmed ? "" : " plus delivery"}`;
+  const link = siteUrl() ? `${siteUrl()}/order/${u.token}` : null;
+  const track = siteUrl() ? `${siteUrl()}/track-order` : null;
+
+  const { subject, lines } =
+    u.event === "pending"
+      ? {
+          subject: `We've received your order ${u.orderNumber}`,
+          lines: [
+            `Hi ${first},`,
+            `Thank you for shopping with ${escapeHtml(site.name)}. We've received your order <strong>${number}</strong> (${total}).`,
+            "We'll call you shortly to confirm it and arrange delivery or collection.",
+          ],
+        }
+      : {
+          subject: `Your order ${u.orderNumber} is on its way`,
+          lines: [`Hi ${first},`, `Good news: your order <strong>${number}</strong> is on its way to you.`],
+        };
+
+  const html = `
+    ${lines.map((line) => `<p>${line}</p>`).join("")}
+    ${link ? `<p><a href="${escapeHtml(link)}">View your order</a></p>` : ""}
+    ${track ? `<p>You can check its progress any time at <a href="${escapeHtml(track)}">${escapeHtml(track)}</a> with your order number and phone.</p>` : ""}
+    <p>Questions? Call or WhatsApp us on ${escapeHtml(site.phone)}.</p>
+    <p>${escapeHtml(site.name)}</p>`;
+
+  await sendEmail(u.customerEmail, subject, html, `${u.event} email for ${u.orderNumber}`);
 }

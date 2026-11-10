@@ -87,7 +87,8 @@ export function ImageSlider({
                 priority={priority && i === 0}
                 // Off-screen slides sit beside the frame, so load them before they're needed.
                 loading={priority && i === 0 ? undefined : "eager"}
-                className={photo.kind === "product" ? "object-contain p-[6%]" : "object-cover"}
+                // Contain, not cover: tall or wide shop photos show whole instead of being cropped.
+                className={`object-contain ${photo.kind === "product" ? "p-[6%]" : ""}`}
               />
             </div>
           ))}

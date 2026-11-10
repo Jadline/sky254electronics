@@ -7,12 +7,14 @@ import { useState, useTransition } from "react";
 import { placeOrder } from "@/app/(site)/checkout/actions";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
 import { DELIVERY_METHODS, type DeliveryMethod } from "@/lib/order-labels";
+import { deliveryFee, type DeliveryRates } from "@/lib/settings";
 import { clearCart, useShop } from "@/lib/shop-store";
+import { track } from "@/lib/analytics";
 import { formatKes, type Product } from "@/lib/types";
 
 const FIELD = "h-11 w-full border border-line bg-white px-3.5 text-sm font-normal outline-none transition-colors focus:border-brand";
 
-export function CheckoutForm({ products }: { products: Product[] }) {
+export function CheckoutForm({ products, rates }: { products: Product[]; rates: DeliveryRates }) {
   const router = useRouter();
   const { cart } = useShop();
   const [method, setMethod] = useState<DeliveryMethod>("nairobi");
@@ -28,6 +30,13 @@ export function CheckoutForm({ products }: { products: Product[] }) {
       : [];
   });
   const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
+  const fee = deliveryFee(method, subtotal, rates);
+  const feeText = (option: DeliveryMethod) => {
+    const value = deliveryFee(option, subtotal, rates);
+    if (value == null) return DELIVERY_METHODS[option].hint;
+    if (option === "pickup") return `Free. ${DELIVERY_METHODS[option].hint}`;
+    return value === 0 ? "Free delivery on this order." : `${formatKes(value)} delivery.`;
+  };
   const unavailable = cart.length - lines.length;
 
   if (lines.length === 0 && !placed) {
@@ -68,6 +77,21 @@ export function CheckoutForm({ products }: { products: Product[] }) {
         website: value("website"),
       });
       if (result.ok) {
+        // Reported here, not on the order page, so its private link never reaches Google or Meta.
+        track({
+          name: "purchase",
+          orderNumber: result.orderNumber,
+          valueKes: subtotal + (fee ?? 0),
+          shippingKes: fee,
+          items: lines.map((line) => ({
+            id: line.product.slug,
+            name: line.product.name,
+            priceKes: line.price,
+            qty: line.qty,
+            brand: line.product.brand,
+            category: line.product.category.name,
+          })),
+        });
         setPlaced(true);
         clearCart();
         router.push(`/order/${result.token}`);
@@ -105,7 +129,7 @@ export function CheckoutForm({ products }: { products: Product[] }) {
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">
               Email <span className="sr-only">(optional)</span>
-              <input name="email" type="email" autoComplete="email" placeholder="Optional" maxLength={200} aria-invalid={invalid("email")} className={FIELD} />
+              <input name="email" type="email" autoComplete="email" placeholder="Optional, for order updates" maxLength={200} aria-invalid={invalid("email")} className={FIELD} />
             </label>
             {/* Hidden from people. Only bots fill this in. */}
             <div aria-hidden="true" className="absolute -left-[9999px]">
@@ -130,7 +154,7 @@ export function CheckoutForm({ products }: { products: Product[] }) {
                 />
                 <span className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium">{option.label}</span>
-                  <span className="text-xs text-muted">{option.hint}</span>
+                  <span className="text-xs text-muted">{feeText(key)}</span>
                 </span>
               </label>
             ))}
@@ -173,13 +197,16 @@ export function CheckoutForm({ products }: { products: Product[] }) {
             </div>
             <div className="flex justify-between gap-3">
               <span className="text-body">Delivery</span>
-              <span className="text-right text-body">{method === "pickup" ? "Free" : "We'll confirm this"}</span>
+              <span className="text-right text-body">{fee === 0 ? "Free" : fee == null ? "We'll confirm this" : formatKes(fee)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
               <span className="font-medium">Total to pay</span>
-              <span className="text-xl font-medium text-brand">{formatKes(subtotal)}</span>
+              <span className="text-xl font-medium text-brand">{formatKes(subtotal + (fee ?? 0))}</span>
             </div>
-            {method !== "pickup" && <p className="text-xs text-muted">Plus delivery, which we&apos;ll confirm when we call you.</p>}
+            {fee == null && <p className="text-xs text-muted">Plus delivery, which we&apos;ll confirm when we call you.</p>}
+            {fee != null && fee > 0 && rates.freeOver != null && (
+              <p className="text-xs text-muted">Free delivery on orders of {formatKes(rates.freeOver)} or more.</p>
+            )}
           </div>
 
           <div className="bg-tint p-4 text-[13px] leading-relaxed">

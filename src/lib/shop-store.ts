@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { track } from "@/lib/analytics";
 
 // Cart and wishlist, saved in this browser. Prices here are a snapshot for the
 // header total; checkout must re-read them from the database.
@@ -70,6 +71,7 @@ export function addToCart(item: Omit<CartItem, "qty">, qty = 1) {
         )
       : [...state.cart, { ...item, qty }],
   });
+  track({ name: "add_to_cart", items: [{ id: item.slug, name: item.name, priceKes: item.priceKes, qty }] });
 }
 
 export function setCartQty(slug: string, qty: number) {

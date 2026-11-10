@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Bucket for product photos (created in supabase/migrations).
 export const PRODUCTS_BUCKET = "products";
+/** The most photos one product can have. */
+export const MAX_PHOTOS = 8;
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 
 // Photos are compressed in the browser before upload, the same recipe the seed

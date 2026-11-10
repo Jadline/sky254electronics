@@ -6,6 +6,7 @@ import { AddToCartButton } from "@/components/card-actions";
 import { CloseIcon } from "@/components/icons";
 import { ImageSlider } from "@/components/image-slider";
 import { categoryHref, priceText, type Product } from "@/lib/types";
+import { WasPrice } from "@/components/was-price";
 
 export function QuickView({ product }: { product: Product }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -54,6 +55,7 @@ export function QuickView({ product }: { product: Product }) {
               <strong className={`text-2xl font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
                 {priceText(product)}
               </strong>
+              <WasPrice product={product} className="-mt-3" />
               <ul className="flex flex-col gap-2 text-[15px] leading-relaxed text-body">
                 {product.brand && <li>– Brand: {product.brand}</li>}
                 {product.warranty && <li>– {product.warranty}</li>}

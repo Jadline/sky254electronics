@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CardActions } from "@/components/card-actions";
+import { WasPrice } from "@/components/was-price";
 import { QuickView } from "@/components/quick-view";
 import { priceText, productHref, type Product } from "@/lib/types";
 
@@ -66,6 +67,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         <strong className={`text-base font-medium whitespace-nowrap ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
           {priceText(product)}
         </strong>
+        <WasPrice product={product} />
         {product.warranty && <span className="text-xs text-muted">{product.warranty}</span>}
       </div>
 
@@ -92,6 +94,7 @@ export function ProductCardMini({ product }: { product: Product }) {
         <span className={`text-[15px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
           {priceText(product)}
         </span>
+        <WasPrice product={product} />
       </span>
     </Link>
   );
@@ -116,6 +119,7 @@ export function ProductCardRow({ product }: { product: Product }) {
         <span className={`text-base font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
           {priceText(product)}
         </span>
+        <WasPrice product={product} />
       </span>
     </Link>
   );

@@ -12,8 +12,11 @@ import { ProductCard, ProductCardMini } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
 import { SideTitle } from "@/components/side-title";
 import { site } from "@/config/site";
-import { getCategories, getProducts } from "@/lib/catalog";
+import { getCategories, getProducts, getShopSettings } from "@/lib/catalog";
 import { categoryHref, priceText, productHref, type Product } from "@/lib/types";
+import { WasPrice } from "@/components/was-price";
+import { TrackProductView } from "@/components/analytics";
+import { breadcrumbJsonLd, JsonLd, productJsonLd } from "@/components/json-ld";
 
 type Params = Promise<{ slug: string }>;
 
@@ -29,7 +32,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title: product.name,
     description: `${product.name}, ${priceText(product)}. ${product.category.name} at ${site.name}, Nairobi.`,
-    openGraph: product.photo ? { images: [product.photo.src] } : undefined,
+    alternates: { canonical: productHref(product.slug) },
+    openGraph: { url: productHref(product.slug), ...((product.photo ?? product.boxPhoto) && { images: [(product.photo ?? product.boxPhoto)!.src] }) },
   };
 }
 
@@ -76,7 +80,7 @@ function ProductRow({ title, items }: { title: string; items: Product[] }) {
 
 async function ProductDetails({ params }: { params: Params }) {
   const { slug } = await params;
-  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+  const [products, categories, settings] = await Promise.all([getProducts(), getCategories(), getShopSettings()]);
   const product = products.find((p) => p.slug === slug);
   if (!product) notFound();
 
@@ -103,6 +107,17 @@ async function ProductDetails({ params }: { params: Params }) {
 
   return (
     <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-20">
+      <JsonLd data={productJsonLd(product, settings)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: product.category.name, path: categoryHref(product.category.slug) },
+          { name: product.name, path: productHref(product.slug) },
+        ])}
+      />
+      <TrackProductView
+        item={{ id: product.slug, name: product.name, priceKes: product.priceKes, brand: product.brand, category: product.category.name }}
+      />
       <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1.5 border-b border-line pb-[22px] text-[13px]">
         <Link href="/" className="hover:text-brand">Home</Link>
         <span aria-hidden="true">&gt;</span>
@@ -178,6 +193,7 @@ async function ProductDetails({ params }: { params: Params }) {
               <strong className={`mt-1 text-[26px] font-medium ${product.priceKes == null ? "text-muted" : "text-brand"}`}>
                 {priceText(product)}
               </strong>
+              <WasPrice product={product} />
               <span className={`inline-flex items-center gap-2 text-[13px] ${product.inStock ? "text-[#15803d]" : "text-muted"}`}>
                 <span className={`size-2 rounded-full ${product.inStock ? "bg-[#15803d]" : "bg-muted"}`} />
                 {product.inStock ? "In stock" : "Sold out"}
@@ -249,7 +265,7 @@ async function ProductDetails({ params }: { params: Params }) {
                         <h2 className="mb-1 text-base font-medium text-text">Delivery</h2>
                         <span>✓ Same day within Nairobi</span>
                         <span>✓ Countrywide by courier</span>
-                        <span>✓ Pick up at {site.address}, Nairobi</span>
+                        <span>✓ Pick up {settings.address ? `at ${settings.address}, Nairobi` : "from our Nairobi shop"}</span>
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <h2 className="mb-1 text-base font-medium text-text">Payment</h2>

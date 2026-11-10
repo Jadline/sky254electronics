@@ -9,6 +9,8 @@ export type Product = {
   brand: string | null;
   category: { slug: string; name: string };
   priceKes: number | null;
+  /** The price before an offer, shown crossed out. Only set when higher than priceKes. */
+  wasPriceKes: number | null;
   warranty: string | null;
   badge: string | null;
   description: string | null;
@@ -18,6 +20,8 @@ export type Product = {
   showInHero: boolean;
   showInBanner: boolean;
   inStock: boolean;
+  /** Units remaining (Stock - Sold) when the shop counts this product; null when it doesn't. */
+  stockQty: number | null;
   /** The product on its own. Missing when we only have a box photo. */
   photo: ProductPhoto | null;
   /** The product in its box, or in the shop. */
@@ -26,7 +30,7 @@ export type Product = {
   photos: GalleryPhoto[];
 };
 
-export type Category = { slug: string; name: string };
+export type Category = { slug: string; name: string; description?: string | null };
 
 export function formatKes(amount: number) {
   return "KSh " + amount.toLocaleString("en-KE");
@@ -37,4 +41,4 @@ export function priceText(product: Pick<Product, "priceKes">) {
 }
 
 export const productHref = (slug: string) => `/products/${slug}`;
-export const categoryHref = (slug: string) => `/shop?category=${slug}`;
+export const categoryHref = (slug: string) => `/shop/${slug}`;

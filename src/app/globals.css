@@ -14,6 +14,26 @@
   --color-line: #e6e9f0;
   --color-on-ink: #c9d4e5;
 
+  /* Admin dashboard: the MinoxidilKe admin layout, in Sky254 blue. */
+  --color-adm-primary: #0669d6;
+  --color-adm-primary-dark: #0453ab;
+  --color-adm-tint: #e8f1fc;
+  --color-adm-ink: #0b1b33;
+  --color-adm-body: #3b4a5e;
+  --color-adm-muted: #5b6b80;
+  --color-adm-faint: #8090a3;
+  --color-adm-surface: #f4f7fb;
+  --color-adm-line: #e3e8ef;
+  --color-adm-line-soft: #eef2f6;
+  --color-adm-line-strong: #d3dbe6;
+  --color-adm-lavender: #eceaf6;
+  --color-adm-lavender-ink: #5b4fa8;
+  --color-adm-teal: #daf3ee;
+  --color-adm-teal-ink: #0f766e;
+  --color-adm-peach: #fdf1ec;
+  --color-adm-peach-ink: #c2410c;
+  --color-adm-coral: #f0643c;
+
   --font-sans: var(--font-rubik);
 }
 

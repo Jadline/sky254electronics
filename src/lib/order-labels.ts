@@ -30,6 +30,15 @@ export const PAYMENT_METHODS = {
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 
+/** Kenyan mobile numbers, stored as 2547XXXXXXXX or 2541XXXXXXXX. */
+export function normalisePhone(raw: string) {
+  const digits = raw.replace(/[\s()-]/g, "").replace(/^\+/, "");
+  if (/^0[17]\d{8}$/.test(digits)) return "254" + digits.slice(1);
+  if (/^[17]\d{8}$/.test(digits)) return "254" + digits;
+  if (/^254[17]\d{8}$/.test(digits)) return digits;
+  return null;
+}
+
 export function formatPhone(phone: string) {
   return phone.startsWith("254") ? "0" + phone.slice(3) : phone;
 }

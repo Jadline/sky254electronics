@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { LiveUpdates } from "@/components/live-updates";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
 import { site, whatsappLink } from "@/config/site";
+import { getShopSettings } from "@/lib/catalog";
 import {
   DELIVERY_METHODS,
   ORDER_STATUSES,
@@ -32,11 +34,14 @@ async function OrderDetails({ params }: { params: Params }) {
   const { token } = await params;
   if (!/^[A-Za-z0-9_-]{32}$/.test(token)) notFound();
 
-  const { data: order } = await createAdminClient()
-    .from("orders")
-    .select("*, order_items(product_name, price_kes, qty, line_total_kes)")
-    .eq("access_token", token)
-    .maybeSingle();
+  const [{ data: order }, settings] = await Promise.all([
+    createAdminClient()
+      .from("orders")
+      .select("*, order_items(product_name, price_kes, qty, line_total_kes)")
+      .eq("access_token", token)
+      .maybeSingle(),
+    getShopSettings(),
+  ]);
   if (!order) notFound();
 
   const status = order.status as OrderStatus;
@@ -47,6 +52,8 @@ async function OrderDetails({ params }: { params: Params }) {
 
   return (
     <div className="flex max-w-[1000px] flex-col gap-[30px]">
+      {/* Status changes from the dashboard show up without a reload. */}
+      <LiveUpdates topic={`order:${order.id}`} />
       <CheckoutSteps current={2} />
 
       <section className="fade-up flex flex-col gap-2 bg-tint p-6">
@@ -106,7 +113,7 @@ async function OrderDetails({ params }: { params: Params }) {
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Delivery</h2>
             <p>{DELIVERY_METHODS[method].label}</p>
             {order.delivery_address && <p className="text-body">{order.delivery_address}</p>}
-            {method === "pickup" && <p className="text-body">{site.address}, Nairobi</p>}
+            {method === "pickup" && <p className="text-body">{settings.address ? `${settings.address}, Nairobi` : "Our Nairobi shop"}</p>}
           </div>
           <div>
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Payment</h2>
