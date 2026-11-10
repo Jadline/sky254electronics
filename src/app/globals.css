@@ -77,9 +77,8 @@ body {
   .cat6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cg-side.one-row > :nth-child(n + 3) { display: none; }
 }
-@media (max-width: 560px) {
-  .cg-side, .cg-full { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-}
+/* Phones keep two cards per row, like the big shopping apps; one per row made each card
+   taller than the screen. */
 
 /* Motion. Entrances use "backwards" fill only: once finished they leave no
    transform behind, so they can't trap a card's hover panel under the next row. */

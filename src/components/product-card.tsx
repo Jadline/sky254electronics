@@ -6,7 +6,7 @@ import { QuickView } from "@/components/quick-view";
 import { priceText, productHref, type Product } from "@/lib/types";
 import { priceTone } from "@/lib/pricing";
 
-const CARD_SIZES = "(max-width: 560px) 100vw, (max-width: 900px) 50vw, 320px";
+const CARD_SIZES = "(max-width: 900px) 50vw, 320px";
 
 /** Standard grid card: clean photo by default, box photo and actions on hover. */
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
@@ -22,7 +22,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
 
   return (
     <article
-      className="group card-in relative flex flex-col gap-2.5 border border-line bg-white px-5 pt-5 pb-4 transition-[box-shadow,translate] duration-100 focus-within:z-20 hover:z-20 hover:-translate-y-1 hover:shadow-[0_0_24px_rgba(29,33,40,0.12)]"
+      className="group card-in relative flex flex-col gap-2.5 border border-line bg-white px-5 pt-5 pb-4 max-sm:gap-2 max-sm:px-3 max-sm:pt-3 max-sm:pb-3 transition-[box-shadow,translate] duration-100 focus-within:z-20 hover:z-20 hover:-translate-y-1 hover:shadow-[0_0_24px_rgba(29,33,40,0.12)]"
       style={{ animationDelay: `${index * 25}ms` }}
     >
       <span className="text-xs tracking-wide text-muted uppercase">{product.category.name}</span>

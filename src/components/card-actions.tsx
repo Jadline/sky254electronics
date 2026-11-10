@@ -42,7 +42,7 @@ export function WishlistButton({ product }: { product: Product }) {
       aria-pressed={saved}
       aria-label={`${saved ? "Remove" : "Add"} ${product.name} ${saved ? "from" : "to"} wishlist`}
       onClick={() => toggleWishlist(product.slug)}
-      className="btn-lift flex size-10 flex-none cursor-pointer items-center justify-center rounded-full border border-line bg-white text-brand"
+      className="btn-lift flex size-10 flex-none cursor-pointer items-center justify-center rounded-full border border-line bg-white text-brand max-sm:size-9"
     >
       <HeartIcon className="size-[18px]" strokeWidth={2} fill={saved ? "currentColor" : "none"} />
     </button>
@@ -53,19 +53,19 @@ export function WishlistButton({ product }: { product: Product }) {
 export function CardActions({ product }: { product: Product }) {
   const whatsapp = whatsappLink(`Hi Sky254, is the ${product.name} available?`);
   return (
-    <div className="absolute inset-x-[-1px] top-full z-10 hidden items-center justify-center gap-2 border border-t-0 border-line bg-white px-3.5 pt-3.5 pb-[18px] shadow-[0_14px_24px_rgba(29,33,40,0.12)] group-focus-within:flex group-hover:flex [@media(hover:none)]:relative [@media(hover:none)]:inset-auto [@media(hover:none)]:flex [@media(hover:none)]:border-0 [@media(hover:none)]:p-0 [@media(hover:none)]:shadow-none">
+    <div className="absolute inset-x-[-1px] top-full z-10 hidden items-center justify-center gap-2 border border-t-0 border-line bg-white px-3.5 pt-3.5 pb-[18px] shadow-[0_14px_24px_rgba(29,33,40,0.12)] group-focus-within:flex group-hover:flex [@media(hover:none)]:relative [@media(hover:none)]:inset-auto [@media(hover:none)]:flex [@media(hover:none)]:border-0 [@media(hover:none)]:p-0 [@media(hover:none)]:shadow-none max-sm:gap-1.5">
       {whatsapp && (
         <a
           href={whatsapp}
           aria-label={`Ask about ${product.name} on WhatsApp`}
-          className="btn-lift flex size-10 flex-none items-center justify-center rounded-full border border-line bg-white text-brand"
+          className="btn-lift flex size-10 flex-none items-center justify-center rounded-full border border-line bg-white text-brand max-sm:hidden"
         >
           <ChatIcon className="size-[18px]" strokeWidth={2} />
         </a>
       )}
       <AddToCartButton
         product={product}
-        className="btn-lift h-10 min-w-0 flex-1 rounded-full bg-brand px-3 text-[13px] font-medium text-white"
+        className="btn-lift h-10 min-w-0 flex-1 rounded-full bg-brand px-3 text-[13px] font-medium text-white max-sm:px-1 max-sm:text-[11px]"
       />
       <WishlistButton product={product} />
     </div>

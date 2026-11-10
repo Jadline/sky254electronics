@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   images: {
+    // Photos are already resized to WebP (at most 1600px) when they're uploaded, so they're
+    // served straight from Supabase. Vercel's image resizing is metered, and once the free
+    // allowance ran out every new size failed with "402 Payment Required".
+    unoptimized: true,
     // Only our own product bucket, so /_next/image can't be used as an open proxy.
     remotePatterns: [
       {
