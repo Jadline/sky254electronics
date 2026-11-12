@@ -6,7 +6,7 @@
 //
 // What's saved is still Markdown (## heading, - item, **bold**), so the website keeps its small,
 // safe renderer (components/rich-text.tsx). The editor only offers what that renderer can show:
-// two heading sizes, bold, links, and bullet and numbered lists.
+// two heading sizes, bold, links, bullet and numbered lists, and simple tables.
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
@@ -15,11 +15,13 @@ import {
   LinkSlashIcon,
   ListBulletIcon,
   NumberedListIcon,
+  TableCellsIcon,
 } from "@heroicons/react/24/outline";
+import { TableKit } from "@tiptap/extension-table";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef, useState, type ComponentType, type FormEvent, type SVGProps } from "react";
+import { useEffect, useRef, useState, type ComponentType, type FormEvent, type ReactNode, type SVGProps } from "react";
 import { buttonClass } from "@/components/admin/ui";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -51,6 +53,8 @@ export function RichTextEditor({ value, onChange, label }: { value: string; onCh
         hardBreak: false,
         link: { openOnClick: false, autolink: true, defaultProtocol: "https" },
       }),
+      // Saved as Markdown pipe tables, e.g. the list of cookies on the Cookie policy.
+      TableKit.configure({ table: { resizable: false } }),
       Markdown,
     ],
     content: value,
@@ -78,7 +82,7 @@ export function RichTextEditor({ value, onChange, label }: { value: string; onCh
       {editor ? <Toolbar editor={editor} /> : <div className="h-[57px] rounded-t-[20px] border-b border-adm-line bg-adm-surface" />}
       {/* The text, styled like the page on the website */}
       <div
-        className="cursor-text px-5 py-8 md:px-12 md:py-10 [&_.legal-editor-content]:mx-auto [&_.legal-editor-content]:min-h-[30rem] [&_.legal-editor-content]:max-w-[720px] [&_.legal-editor-content]:space-y-4 [&_.legal-editor-content]:text-[15px] [&_.legal-editor-content]:leading-relaxed [&_.legal-editor-content]:text-adm-body [&_.legal-editor-content]:outline-none [&_a]:font-medium [&_a]:text-adm-primary [&_a]:underline [&_a]:underline-offset-2 [&_h2]:pt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-adm-ink [&_h3]:pt-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-adm-ink [&_li]:my-1 [&_li]:pl-1 [&_li_p]:m-0 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol_li]:marker:text-adm-primary [&_strong]:font-semibold [&_strong]:text-adm-ink [&_ul]:list-disc [&_ul]:pl-6 [&_ul_li]:marker:text-adm-primary"
+        className="cursor-text px-5 py-8 md:px-12 md:py-10 [&_.legal-editor-content]:mx-auto [&_.legal-editor-content]:min-h-[30rem] [&_.legal-editor-content]:max-w-[720px] [&_.legal-editor-content]:space-y-4 [&_.legal-editor-content]:text-[15px] [&_.legal-editor-content]:leading-relaxed [&_.legal-editor-content]:text-adm-body [&_.legal-editor-content]:outline-none [&_a]:font-medium [&_a]:text-adm-primary [&_a]:underline [&_a]:underline-offset-2 [&_h2]:pt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-adm-ink [&_h3]:pt-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-adm-ink [&_li]:my-1 [&_li]:pl-1 [&_li_p]:m-0 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol_li]:marker:text-adm-primary [&_strong]:font-semibold [&_strong]:text-adm-ink [&_ul]:list-disc [&_ul]:pl-6 [&_ul_li]:marker:text-adm-primary [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_td]:border [&_td]:border-adm-line [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_th]:border [&_th]:border-adm-line [&_th]:bg-adm-surface [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-adm-ink [&_td_p]:m-0 [&_th_p]:m-0 [&_.selectedCell]:bg-adm-primary/10"
         onClick={() => editor?.commands.focus()}
       >
         <EditorContent editor={editor} />
@@ -105,6 +109,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       link: e.isActive("link"),
       bullets: e.isActive("bulletList"),
       numbers: e.isActive("orderedList"),
+      table: e.isActive("table"),
       canUndo: e.can().undo(),
       canRedo: e.can().redo(),
     }),
@@ -142,6 +147,24 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Divider />
         <ToolButton label="Bullet list" icon={ListBulletIcon} active={state.bullets} run={() => editor.chain().focus().toggleBulletList().run()} />
         <ToolButton label="Numbered list" icon={NumberedListIcon} active={state.numbers} run={() => editor.chain().focus().toggleOrderedList().run()} />
+        <Divider />
+        <ToolButton
+          label="Insert table"
+          icon={TableCellsIcon}
+          active={state.table}
+          disabled={state.table}
+          run={() => editor.chain().focus().insertTable({ rows: 2, cols: 3, withHeaderRow: true }).run()}
+        />
+        {/* Only while the cursor is in a table */}
+        {state.table && (
+          <div className="flex gap-1 text-[13px]" role="group" aria-label="Table">
+            <TextButton run={() => editor.chain().focus().addRowAfter().run()}>+ Row</TextButton>
+            <TextButton run={() => editor.chain().focus().deleteRow().run()}>− Row</TextButton>
+            <TextButton run={() => editor.chain().focus().addColumnAfter().run()}>+ Column</TextButton>
+            <TextButton run={() => editor.chain().focus().deleteColumn().run()}>− Column</TextButton>
+            <TextButton run={() => editor.chain().focus().deleteTable().run()}>Delete table</TextButton>
+          </div>
+        )}
         <div className="ml-auto flex">
           <ToolButton label="Undo" icon={ArrowUturnLeftIcon} active={false} disabled={!state.canUndo} run={() => editor.chain().focus().undo().run()} />
           <ToolButton label="Redo" icon={ArrowUturnRightIcon} active={false} disabled={!state.canRedo} run={() => editor.chain().focus().redo().run()} />
@@ -153,6 +176,14 @@ function Toolbar({ editor }: { editor: Editor }) {
 }
 
 const Divider = () => <span className="mx-1 h-6 w-px bg-adm-line-strong" aria-hidden />;
+
+function TextButton({ run, children }: { run: () => void; children: ReactNode }) {
+  return (
+    <button type="button" onClick={run} className="cursor-pointer rounded-full px-3 py-1.5 font-medium text-adm-body transition-colors hover:bg-white hover:text-adm-ink">
+      {children}
+    </button>
+  );
+}
 
 function ToolButton({ label, icon: Icon, active, run, disabled = false }: { label: string; icon: Icon; active: boolean; run: () => void; disabled?: boolean }) {
   return (

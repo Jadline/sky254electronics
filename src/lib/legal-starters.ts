@@ -106,45 +106,49 @@ After you order, we call you to confirm the details and the delivery time. You p
 
 Please check the product and its packaging before you accept it. If anything is damaged or missing, tell the delivery person and call us straight away.`,
 
-  cookies: `This policy explains what cookies are, which ones the Sky254 Electronics website uses, and how you can manage them.
+  cookies: `Effective date: November 12, 2026
+
+Last updated: November 12, 2026
 
 ## What are cookies?
 
-Cookies are small text files a website stores on your device when you visit it. They help the site work properly, keep it secure, and show how it's used so we can improve it. Websites can also keep information in your browser's own storage, which works in a similar way.
+This Cookie Policy explains what cookies are, how we use them, the types of cookies we use (i.e., the information we collect using cookies and how that information is used), and how to manage your cookie settings.
 
-## How we use cookies
+Cookies are small text files used to store small pieces of information. They are stored on your device when a website loads in your browser. These cookies help ensure that the website functions properly, enhance security, provide a better user experience, and analyse performance to identify what works and where improvements are needed.
 
-We keep cookies to a minimum. You can shop, add to your cart and place an order without an account. Some cookies are set by us (first-party). Others are set by analytics and advertising services we may use (third-party), to understand how visitors use the site and to measure our adverts.
+## How do we use cookies?
 
-## Necessary storage
+Like most online services, our website uses both first-party and third-party cookies for various purposes. First-party cookies are primarily necessary for the website to function properly and do not collect any personally identifiable data.
 
-This is needed for the site to work, and doesn't track you.
+The third-party cookies used on our website primarily help us understand how the website performs, track how you interact with it, keep our services secure, deliver relevant advertisements, and enhance your overall user experience while improving the speed of your future interactions with our website.
 
-- **Cart and wishlist** (stored in your browser, not a cookie): remembers what you added until you remove it or clear your browser data. It stays on your device and isn't sent to us until you place an order.
-- **Dashboard sign-in** (sb-…-auth-token cookies): keeps shop staff signed in to the admin dashboard. Customers never get these.
+## Types of cookies we use
 
-## Analytics and advertising cookies
+### Necessary
 
-If we turn on these services, they set their own cookies:
+Necessary cookies are required to enable the basic features of this site, such as providing secure log-in or adjusting your consent preferences. These cookies do not store any personally identifiable data.
 
-- **Google Analytics** (_ga, _ga_…, up to 2 years): counts visits and shows which pages and products are popular. The information is grouped and doesn't identify you by name.
-- **Google Ads** (_gcl_au, 3 months): tells us when someone who clicked one of our Google adverts goes on to buy.
-- **Meta Pixel** (_fbp, 3 months): tells us when someone who saw one of our Facebook or Instagram adverts goes on to buy, and helps show our adverts to people likely to be interested.
+| Cookie | Duration | Description |
+| --- | --- | --- |
+| __cf_bm | 1 hour | This cookie, set by Cloudflare, is used to support Cloudflare Bot Management. |
 
-These never load on your private order page.
+## Manage cookie preferences
 
-## Managing cookies
+[Consent Preferences](#consent-preferences)
 
-You can block or delete cookies in your browser settings. Blocking necessary storage may stop the cart from working. Here's how in the main browsers:
+You can modify your cookie settings anytime by clicking the 'Consent Preferences' button above. This will allow you to revisit the cookie consent banner and update your preferences or withdraw your consent immediately.
 
-- [Chrome](https://support.google.com/accounts/answer/32050)
-- [Safari](https://support.apple.com/en-gb/guide/safari/sfri11471/mac)
-- [Firefox](https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox)
-- [Microsoft Edge](https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09)
+Additionally, different browsers offer various methods to block and delete cookies used by websites. You can adjust your browser settings to block or delete cookies. Below are links to support documents on how to manage and delete cookies in major web browsers.
 
-You can also opt out of Google Analytics with [Google's opt-out add-on](https://tools.google.com/dlpage/gaoptout), and choose which adverts you see in your [Google](https://adssettings.google.com) and [Facebook](https://www.facebook.com/adpreferences) ad settings.
+Chrome: [https://support.google.com/accounts/answer/32050](https://support.google.com/accounts/answer/32050)
 
-## More information
+Safari: [https://support.apple.com/en-in/guide/safari/sfri11471/mac](https://support.apple.com/en-in/guide/safari/sfri11471/mac)
 
-Our [privacy policy](/privacy) explains how we handle your personal data. If you have questions about cookies, [contact us](/contact).`,
+Firefox: [https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox?redirectslug=delete-cookies-remove-info-websites-stored&redirectlocale=en-US](https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox?redirectslug=delete-cookies-remove-info-websites-stored&redirectlocale=en-US)
+
+Microsoft Edge: [https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09](https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09)
+
+If you are using a different web browser, please refer to its official support documentation.
+
+Cookie Policy generated by [CookieYes - Cookie Policy Generator](https://www.cookieyes.com/cookie-policy-generator/)`,
 };
