@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { ChevronRightIcon, CloseIcon, MenuIcon, TruckIcon } from "@/components/icons";
 
 type MenuLink = { label: string; href: string };
@@ -11,13 +10,9 @@ type MenuLink = { label: string; href: string };
     the desktop header shows across three rows. */
 export function MobileMenu({ main, departments, phone, whatsapp }: { main: MenuLink[]; departments: MenuLink[]; phone: string; whatsapp: string | null }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const pathname = usePathname();
 
-  // Following a link closes the menu.
-  useEffect(() => {
-    dialog.current?.close();
-  }, [pathname]);
-
+  // Every link closes the menu when tapped. (Reading the URL with usePathname here
+  // would block prerendering of dynamic pages such as /order/[token].)
   const close = () => dialog.current?.close();
   const row = "flex min-h-12 items-center gap-3 border-b border-line px-5 text-[15px] transition-colors hover:text-brand";
 
