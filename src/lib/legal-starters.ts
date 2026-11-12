@@ -15,7 +15,7 @@ export const LEGAL_STARTERS: Record<LegalSlug, string> = {
 - When you order: your name, phone number, email address (if you give one) and delivery address.
 - When you pay by M-Pesa: the payment details Safaricom sends us, such as the transaction code and phone number.
 - When you sign up for stock alerts: your email address.
-- When you browse: your cart and wishlist are stored on your own device, not by us. If we use analytics or advertising tools, they collect information about your visit, such as pages viewed and your device type.
+- When you browse: we save your cart and wishlist so they're still there when you come back. They're linked to a cookie on your device, not to your name or phone number. If we use analytics or advertising tools, they collect information about your visit, such as pages viewed and your device type.
 
 ## How we use it
 
@@ -131,6 +131,7 @@ Necessary cookies are required to enable the basic features of this site, such a
 | Cookie | Duration | Description |
 | --- | --- | --- |
 | __cf_bm | 1 hour | This cookie, set by Cloudflare, is used to support Cloudflare Bot Management. |
+| sky254-cart | 6 months | Keeps your cart and wishlist. It holds a random code only, with nothing about you. |
 
 ## Manage cookie preferences
 

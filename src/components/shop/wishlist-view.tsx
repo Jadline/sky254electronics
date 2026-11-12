@@ -4,14 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/card-actions";
 import { CloseIcon } from "@/components/icons";
+import { ShopLoading } from "@/components/shop/shop-loading";
 import { toggleWishlist, useShop } from "@/lib/shop-store";
 import { priceText, productHref, type Product } from "@/lib/types";
 import { WasPrice } from "@/components/was-price";
 import { priceTone } from "@/lib/pricing";
 
 export function WishlistView({ products }: { products: Product[] }) {
-  const { wishlist } = useShop();
+  const { wishlist, loaded } = useShop();
   const items = wishlist.flatMap((slug) => products.find((p) => p.slug === slug) ?? []);
+
+  // The wishlist comes from the server: wait for it rather than showing "empty" first.
+  if (!loaded) return <ShopLoading />;
 
   if (items.length === 0) {
     return (

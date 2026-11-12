@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { CloseIcon } from "@/components/icons";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
+import { ShopLoading } from "@/components/shop/shop-loading";
 import { whatsappLink } from "@/config/site";
 import { clearCart, removeFromCart, setCartQty, useShop } from "@/lib/shop-store";
 import { formatKes, productHref, type Product } from "@/lib/types";
 
 export function CartView({ products }: { products: Product[] }) {
-  const { cart } = useShop();
+  const { cart, loaded } = useShop();
 
   // Prices always come from the live catalogue, not from when the item was added.
   const lines = cart.flatMap((line) => {
@@ -23,6 +24,9 @@ export function CartView({ products }: { products: Product[] }) {
 
   const order = lines.map((l) => `${l.qty} x ${l.product.name}`).join("\n");
   const whatsapp = whatsappLink(`Hi Sky254, I'd like to order:\n${order}\nSubtotal: ${formatKes(subtotal)}`);
+
+  // The cart comes from the server: wait for it rather than showing "empty" first.
+  if (!loaded) return <ShopLoading step={0} />;
 
   return (
     <div className="flex min-w-0 max-w-[1000px] flex-col gap-[30px] max-sm:gap-5">

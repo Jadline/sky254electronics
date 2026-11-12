@@ -7,6 +7,7 @@ import { useRef, useState, useTransition } from "react";
 import { placeOrder } from "@/app/(site)/checkout/actions";
 import { previewCoupon } from "@/app/(site)/checkout/coupon-actions";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
+import { ShopLoading } from "@/components/shop/shop-loading";
 import { choiceFee, findChoice, type DeliveryChoice, type DeliveryChoices } from "@/lib/delivery";
 import { clearCart, useShop } from "@/lib/shop-store";
 import { track } from "@/lib/analytics";
@@ -20,7 +21,7 @@ const INLINE_FIELDS = ["name", "phone", "email", "address"];
 
 export function CheckoutForm({ products, delivery, shopPhone }: { products: Product[]; delivery: DeliveryChoices; shopPhone: string }) {
   const router = useRouter();
-  const { cart } = useShop();
+  const { cart, loaded } = useShop();
   const firstChoice = delivery.options[0] ? `option:${delivery.options[0].id}` : delivery.pickupPoints[0] ? `pickup:${delivery.pickupPoints[0].id}` : "";
   const [picked, setSelected] = useState(firstChoice);
   // If the picked option is switched off while the page is open, fall back to the first one.
@@ -59,6 +60,9 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
   const needsAddress = choice?.kind === "option";
   const courier = choice?.kind === "option" && !choice.option.ownRider;
   const unavailable = cart.length - lines.length;
+
+  // The cart comes from the server: wait for it rather than showing "empty" first.
+  if (!loaded && !placed) return <ShopLoading step={1} />;
 
   if (lines.length === 0 && !placed) {
     return (
