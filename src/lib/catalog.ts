@@ -2,10 +2,14 @@ import { cacheLife, cacheTag } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { productImageUrl } from "@/lib/storage";
 import { salePrice } from "@/lib/pricing";
-import { settingsFromRow, type ShopSettings } from "@/lib/settings";
-import { SITE_PAGES, type SitePage, type SitePageSlug } from "@/lib/site-pages";
+import { SETTINGS_COLUMNS, settingsFromRow, type SettingsRow, type ShopSettings } from "@/lib/settings";
+import type { DeliveryChoices } from "@/lib/delivery";
+import { LEGAL_STARTERS } from "@/lib/legal-starters";
+import type { LegalPage, LegalSlug } from "@/lib/site-pages";
 import type { Review } from "@/lib/reviews";
 import type { Category, Product, ProductPhoto } from "@/lib/types";
+
+const FETCH_TIMEOUT_MS = 20_000;
 
 // The catalogue is public, so it uses the publishable key with no cookies. That
 // is what lets it be cached and shared between visitors.
@@ -17,7 +21,15 @@ function publicClient() {
       auth: { autoRefreshToken: false, persistSession: false },
       // "use cache" below decides how long results live. Without no-store, Next also
       // saves the raw responses to disk and a new build would reuse the old data.
-      global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+      // The timeout makes a slow or unreachable database fail with a clear error,
+      // instead of hanging until Next gives up on the cached function (about 50s).
+      global: {
+        fetch: (input, init) => {
+          const timeout = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+          const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+          return fetch(input, { ...init, cache: "no-store", signal });
+        },
+      },
     },
   );
 }
@@ -114,37 +126,48 @@ export async function getShopSettings(): Promise<ShopSettings> {
   cacheLife("minutes");
   cacheTag("catalog");
 
-  const { data, error } = await publicClient()
-    .from("shop_settings")
-    .select("email, address, hours, facebook_url, instagram_url, tiktok_url, nairobi_fee_kes, countrywide_fee_kes, free_delivery_over_kes")
-    .eq("id", 1)
-    .maybeSingle();
+  const { data, error } = await publicClient().from("shop_settings").select(SETTINGS_COLUMNS).eq("id", 1).maybeSingle<SettingsRow>();
   if (error) console.error(`Couldn't load shop settings: ${error.message}`);
   return settingsFromRow(data);
 }
 
 /**
- * An information page's wording from Pages in the dashboard. Falls back to just the
- * title if it can't be read (for example before the site_pages migration has been run).
+ * The delivery options and pickup points switched on under Delivery, in their order.
+ * Empty if they can't be read (for example before the delivery migration has been run).
  */
-export async function getSitePage(slug: SitePageSlug): Promise<SitePage> {
+export async function getDelivery(): Promise<DeliveryChoices> {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog");
 
-  const { data, error } = await publicClient()
-    .from("site_pages")
-    .select("title, description, body, updated_at")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (error) console.error(`Couldn't load the ${slug} page: ${error.message}`);
+  const db = publicClient();
+  const [options, points, settings] = await Promise.all([
+    db.from("delivery_options").select("id, name, areas, town, cost_kes, own_rider").eq("is_active", true).order("sort_order").order("created_at"),
+    db.from("pickup_points").select("id, name, address, hours").eq("is_active", true).order("sort_order").order("created_at"),
+    getShopSettings(),
+  ]);
+  if (options.error) console.error(`Couldn't load delivery options: ${options.error.message}`);
+  if (points.error) console.error(`Couldn't load pickup points: ${points.error.message}`);
   return {
-    slug,
-    title: data?.title?.trim() || SITE_PAGES[slug].title,
-    description: data?.description?.trim() || null,
-    body: data?.body ?? "",
-    updatedAt: data?.updated_at ?? null,
+    options: (options.data ?? []).map((o) => ({ id: o.id, name: o.name, areas: o.areas, town: o.town, costKes: o.cost_kes, ownRider: o.own_rider })),
+    pickupPoints: points.data ?? [],
+    freeOver: settings.freeDeliveryOver,
   };
+}
+
+/**
+ * A legal page's text from Legal pages in the dashboard. Falls back to our starter text
+ * if it hasn't been saved or can't be read, so the page is never empty.
+ */
+export async function getLegalPage(slug: LegalSlug): Promise<LegalPage> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalog");
+
+  const { data, error } = await publicClient().from("site_pages").select("body, updated_at").eq("slug", slug).maybeSingle();
+  if (error) console.error(`Couldn't load the ${slug} page: ${error.message}`);
+  const body = data?.body?.trim();
+  return { slug, body: body || LEGAL_STARTERS[slug], updatedAt: body ? data!.updated_at : null };
 }
 
 /**

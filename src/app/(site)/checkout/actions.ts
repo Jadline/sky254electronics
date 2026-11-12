@@ -2,12 +2,12 @@
 
 import { randomBytes, randomInt } from "node:crypto";
 import { after } from "next/server";
-import { getShopSettings } from "@/lib/catalog";
+import { getDelivery } from "@/lib/catalog";
 import { checkCoupon } from "@/lib/coupon-check";
+import { choiceFee, choiceMethod, choiceName, findChoice } from "@/lib/delivery";
 import { sendCustomerUpdate, sendOrderAlert } from "@/lib/notify";
-import { DELIVERY_METHODS, normalisePhone, type DeliveryMethod } from "@/lib/order-labels";
+import { normalisePhone } from "@/lib/order-labels";
 import { salePrice } from "@/lib/pricing";
-import { deliveryFee } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CheckoutInput = {
@@ -17,7 +17,8 @@ export type CheckoutInput = {
   name: string;
   phone: string;
   email: string;
-  deliveryMethod: string;
+  /** The delivery option or pickup point chosen: "option:<id>" or "pickup:<id>". */
+  delivery: string;
   address: string;
   notes: string;
   /** A coupon code, if the customer applied one, and the discount they were shown for it. */
@@ -56,13 +57,18 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "That email address doesn't look right.", field: "email" };
   }
 
-  const method = clean(input.deliveryMethod, 20);
-  if (!Object.hasOwn(DELIVERY_METHODS, method)) return { ok: false, error: "Please choose how you'd like to get your order." };
-  const deliveryMethod = method as DeliveryMethod;
+  // Only options and pickup points switched on under Delivery can be chosen.
+  const delivery = await getDelivery();
+  const choice = findChoice(delivery, clean(input.delivery, 60));
+  if (!choice) return { ok: false, error: "Please choose how you'd like to get your order." };
+  const deliveryMethod = choiceMethod(choice);
+  const needsAddress = choice.kind === "option";
   const address = clean(input.address, 300);
-  if (DELIVERY_METHODS[deliveryMethod].needsAddress && address.length < 3) {
+  if (needsAddress && address.length < 3) {
     return { ok: false, error: "Please tell us where to deliver.", field: "address" };
   }
+  // The shop's own rider can take cash; a courier is paid by M-Pesa before it's sent.
+  const paymentMethod = choice.kind === "option" && !choice.option.ownRider ? "mpesa" : "cash";
   const notes = clean(input.notes, 500);
 
   // Combine repeated lines and check quantities.
@@ -145,9 +151,10 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   }
   const payable = subtotal - discount;
 
-  // The fee comes from Shop settings. null means the shop confirms it when they call.
+  // The fee comes from the chosen option. null means the shop confirms it when they call.
   // Free delivery is judged on what's paid after the coupon, so a code can't unlock it.
-  const fee = deliveryFee(deliveryMethod, payable, (await getShopSettings()).delivery);
+  const fee = choiceFee(choice, payable, delivery.freeOver);
+  const deliveryAddress = needsAddress ? address : null;
   const token = randomBytes(24).toString("base64url");
   let order: { id: string; order_number: string } | null = null;
   for (let attempt = 0; attempt < 5 && !order; attempt++) {
@@ -156,12 +163,15 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       .insert({
         order_number: orderNumber(),
         access_token: token,
-        payment_method: "cash",
+        payment_method: paymentMethod,
         customer_name: name,
         customer_phone: phone,
         customer_email: email || null,
         delivery_method: deliveryMethod,
-        delivery_address: DELIVERY_METHODS[deliveryMethod].needsAddress ? address : null,
+        delivery_option_id: choice.kind === "option" ? choice.option.id : null,
+        pickup_point_id: choice.kind === "pickup" ? choice.point.id : null,
+        delivery_option_name: choiceName(choice),
+        delivery_address: deliveryAddress,
         notes: notes || null,
         subtotal_kes: subtotal,
         delivery_fee_kes: fee,
@@ -191,8 +201,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       orderNumber: placed.order_number,
       customerName: name,
       customerPhone: phone,
-      deliveryMethod,
-      deliveryAddress: DELIVERY_METHODS[deliveryMethod].needsAddress ? address : null,
+      deliveryName: choiceName(choice),
+      deliveryAddress,
       notes: notes || null,
       subtotalKes: subtotal,
       discountKes: discount,

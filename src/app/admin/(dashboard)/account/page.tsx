@@ -12,7 +12,7 @@ async function Account() {
   const { user } = await requireAdmin();
   const name = adminName(user);
   return (
-    <div className="grid max-w-4xl items-start gap-[18px] md:grid-cols-[1fr_1.2fr]">
+    <div className="grid items-start gap-[18px] md:grid-cols-[1fr_1.2fr]">
       <section aria-labelledby="me-h" className="flex flex-col gap-4 rounded-[20px] border border-adm-line bg-white px-[22px] py-5">
         <h2 id="me-h" className="text-lg font-semibold">
           Signed in

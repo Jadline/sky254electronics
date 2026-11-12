@@ -14,6 +14,7 @@ export function OrderEditor({
   deliveryFee,
   subtotal,
   isCash,
+  canMarkPaid,
   isPaid,
   paymentLabel,
 }: {
@@ -23,6 +24,8 @@ export function OrderEditor({
   deliveryFee: number | null;
   subtotal: number;
   isCash: boolean;
+  /** Cash, or M-Pesa paid straight to the shop (no Safaricom payment on record). */
+  canMarkPaid: boolean;
   isPaid: boolean;
   paymentLabel: string;
 }) {
@@ -60,10 +63,10 @@ export function OrderEditor({
       <div className="flex flex-col gap-1.5 rounded-[14px] bg-adm-surface px-3.5 py-3 text-sm">
         <span className="font-semibold">Payment</span>
         <span className="text-adm-body">{paymentLabel}</span>
-        {isCash ? (
+        {canMarkPaid ? (
           <label className="mt-1 flex cursor-pointer items-center gap-2.5">
             <input type="checkbox" name="paid" defaultChecked={isPaid} className="size-4 accent-adm-primary" />
-            Cash received
+            {isCash ? "Cash received" : "M-Pesa received"}
           </label>
         ) : (
           <span className="text-[13px] text-adm-muted">M-Pesa payments are confirmed by Safaricom automatically.</span>

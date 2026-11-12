@@ -121,7 +121,7 @@ export default async function Home() {
   const featuredRow = [...featured].reverse().slice(0, 5);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1860px] flex-col gap-[50px] px-6 pb-20">
+    <main className="mx-auto flex w-full max-w-[1860px] flex-col gap-[50px] px-6 pb-20 max-sm:gap-9 max-sm:px-4 max-sm:pb-14">
       <h1 className="sr-only">Sky254 Electronics: phones, TVs, fridges and CCTV in Nairobi</h1>
 
       <section className="fade-up flex flex-wrap items-start gap-[30px]">
@@ -151,20 +151,20 @@ export default async function Home() {
           </div>
         </nav>
 
-        <div className="flex min-w-0 flex-[999_1_640px] flex-wrap gap-5">
+        <div className="flex min-w-0 flex-[999_1_640px] flex-wrap gap-5 max-sm:gap-3">
           {slides.length > 0 && <HeroSlider slides={slides} />}
           {tiles.length > 0 && (
-            <div className="grid min-w-0 flex-[1_1_400px] grid-cols-2 gap-5">
+            <div className="grid min-w-0 flex-[1_1_400px] grid-cols-2 gap-5 max-sm:gap-3">
               {tiles.map((slug) => {
                 const image = categoryPhoto(slug);
                 return (
                   <Link
                     key={slug}
                     href={categoryHref(slug)}
-                    className="tile relative flex min-h-[200px] flex-col gap-1 overflow-hidden bg-tint p-[22px]"
+                    className="tile relative flex min-h-[200px] flex-col gap-1 overflow-hidden bg-tint p-[22px] max-sm:min-h-[150px] max-sm:p-3.5"
                   >
                     <span className="relative z-10 text-xs text-brand">{categoryName(slug)}</span>
-                    <span className="relative z-10 max-w-[58%] text-base leading-snug font-medium">{lowestPrice(slug)}</span>
+                    <span className="relative z-10 max-w-[58%] text-base leading-snug font-medium max-sm:max-w-full max-sm:text-sm">{lowestPrice(slug)}</span>
                     {image && (
                       <span className="absolute right-2.5 bottom-2.5 h-[62%] w-[42%]">
                         <Image src={image.src} alt="" fill sizes="220px" className="object-contain mix-blend-multiply" />
@@ -182,7 +182,7 @@ export default async function Home() {
         {sideBanner?.photo && (
           <Link
             href={productHref(sideBanner.slug)}
-            className="tile relative flex min-h-[230px] min-w-60 flex-[0_1_270px] flex-col gap-1 overflow-hidden bg-tint px-6 py-[30px]"
+            className="tile relative flex min-h-[230px] min-w-60 flex-[0_1_270px] flex-col gap-1 overflow-hidden bg-tint px-6 py-[30px] max-lg:flex-[1_1_100%] max-sm:min-h-[170px] max-sm:px-5 max-sm:py-6"
           >
             <span className="relative z-10 max-w-[75%] text-2xl leading-tight font-light">{sideBanner.shortName ?? sideBanner.name}</span>
             <strong className="relative z-10 text-xl font-medium text-brand">{priceText(sideBanner)}</strong>
@@ -194,12 +194,12 @@ export default async function Home() {
         )}
         <div className="flex min-w-0 flex-[999_1_600px] flex-col gap-[22px]">
           <SectionTitle>Top categories</SectionTitle>
-          <div className="cat6 grid gap-5">
+          <div className="cat6 grid gap-5 max-sm:gap-3">
             {topCategories.map((slug) => {
               const image = categoryPhoto(slug);
               return (
-                <Link key={slug} href={categoryHref(slug)} className="tile flex flex-col items-center gap-3.5 bg-tint px-3 pt-5 pb-[18px]">
-                  <span className="relative h-[100px] w-full">
+                <Link key={slug} href={categoryHref(slug)} className="tile flex flex-col items-center gap-3.5 bg-tint px-3 pt-5 pb-[18px] max-sm:gap-2 max-sm:px-2 max-sm:pt-3 max-sm:pb-3">
+                  <span className="relative h-[100px] w-full max-sm:h-[72px]">
                     {image && <Image src={image.src} alt="" fill sizes="240px" className="object-contain mix-blend-multiply" />}
                   </span>
                   <span className="text-center text-xs">{categoryName(slug)}</span>
@@ -211,8 +211,9 @@ export default async function Home() {
       </section>
 
       <section className="reveal flex flex-wrap items-start gap-[30px]">
-        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-10">
-          <div>
+        {/* Phones: the product tabs come first. The latest list repeats "New arrivals", so it's left out. */}
+        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-10 max-lg:order-last max-lg:flex-[1_1_100%]">
+          <div className="max-lg:hidden">
             <h2 className="mb-[18px] text-base font-medium">Latest products</h2>
             <div className="border border-b-0 border-line">
               {live.slice(0, 5).map((product) => (
@@ -237,14 +238,14 @@ export default async function Home() {
       </section>
 
       {rowBanners.length > 0 && (
-        <section className="reveal grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[30px]">
+        <section className="reveal grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-[30px] max-sm:gap-3">
           {rowBanners.map((product) => {
             const { light, bold } = splitTitle(product);
             return (
               <Link
                 key={product.slug}
                 href={productHref(product.slug)}
-                className="tile relative flex min-h-[190px] flex-col gap-2 overflow-hidden bg-tint px-6 py-[26px]"
+                className="tile relative flex min-h-[190px] flex-col gap-2 overflow-hidden bg-tint px-6 py-[26px] max-sm:min-h-[160px] max-sm:px-5 max-sm:py-5"
               >
                 <span className="relative z-10 text-sm text-brand">{priceText(product)}</span>
                 <span className="relative z-10 max-w-[55%] text-[22px] leading-tight font-light">
@@ -267,12 +268,13 @@ export default async function Home() {
       {sections
         .filter((section) => section.categories.length > 0)
         .map((section) => (
-          <section key={section.title} className="reveal flex flex-col gap-[30px]">
+          <section key={section.title} className="reveal flex flex-col gap-[30px] max-sm:gap-4">
             <div className="flex flex-wrap items-center justify-between gap-x-[30px] gap-y-3 border-b border-line pb-3.5">
               <h2 className="text-base font-medium">{section.title}</h2>
-              <div className="flex flex-wrap gap-[26px] text-[13px]">
+              {/* Phones: one row of chips that scrolls sideways, instead of several wrapped lines. */}
+              <div className="flex flex-wrap gap-[26px] text-[13px] max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:flex-nowrap max-sm:gap-2 max-sm:overflow-x-auto max-sm:px-4 max-sm:[scrollbar-width:none]">
                 {section.categories.map((slug) => (
-                  <Link key={slug} href={categoryHref(slug)} className="text-muted transition-colors hover:text-brand">
+                  <Link key={slug} href={categoryHref(slug)} className="text-muted transition-colors hover:text-brand max-sm:flex-none max-sm:rounded-full max-sm:border max-sm:border-line max-sm:px-3.5 max-sm:py-1.5 max-sm:whitespace-nowrap">
                     {categoryName(slug)}
                   </Link>
                 ))}
@@ -283,7 +285,7 @@ export default async function Home() {
         ))}
 
       <section className="reveal flex flex-wrap items-start gap-[30px]">
-        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-[18px]">
+        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-[18px] max-lg:order-last max-lg:flex-[1_1_100%]">
           <SectionTitle>Visit our shop</SectionTitle>
           <div className="flex flex-col gap-3 border border-line p-3.5">
             {shopPhoto && (
@@ -301,7 +303,7 @@ export default async function Home() {
         {more.length > 0 && (
           <div className="flex min-w-0 flex-[999_1_640px] flex-col gap-[30px]">
             <SectionTitle>More from the shop</SectionTitle>
-            <div className="cg-rows grid gap-x-[30px] gap-y-5">
+            <div className="cg-rows grid gap-x-[30px] gap-y-5 max-sm:gap-y-3">
               {more.map((product) => (
                 <ProductCardRow key={product.slug} product={product} />
               ))}
@@ -313,7 +315,7 @@ export default async function Home() {
       {testimonials.length > 0 && (
         <section aria-labelledby="testimonials-h" className="reveal flex flex-col gap-[26px]">
           <h2 id="testimonials-h" className="border-b border-line pb-3.5 text-base font-medium">What customers say</h2>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[30px]">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(280px,100%),1fr))] gap-[30px] max-sm:gap-3">
             {testimonials.map(({ review, product }) => (
               <figure key={review.id} className="flex flex-col gap-3 bg-tint px-6 py-[26px]">
                 <Stars rating={review.rating} />
@@ -330,9 +332,9 @@ export default async function Home() {
       )}
 
       {brands.length > 0 && (
-        <section aria-label="Brands we stock" className="reveal flex flex-wrap items-center justify-around gap-x-10 gap-y-6 border border-line px-5 py-[34px]">
+        <section aria-label="Brands we stock" className="reveal flex flex-wrap items-center justify-around gap-x-10 gap-y-6 border border-line px-5 py-[34px] max-sm:gap-x-6 max-sm:gap-y-3 max-sm:py-6">
           {brands.map((brand) => (
-            <span key={brand} className="text-2xl font-medium tracking-tight text-[#7c8594]">{brand}</span>
+            <span key={brand} className="text-2xl font-medium tracking-tight text-[#7c8594] max-sm:text-lg">{brand}</span>
           ))}
         </section>
       )}

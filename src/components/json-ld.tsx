@@ -49,9 +49,8 @@ export function storeJsonLd(settings: ShopSettings) {
  * A product and its offer, for Google's product results. Products without a price
  * ("Ask for price") have no offer, so Google shows them without one.
  */
-export function productJsonLd(product: Product, settings: ShopSettings, reviews?: ReviewSummary) {
+export function productJsonLd(product: Product, shippingRate: number | null, reviews?: ReviewSummary) {
   const url = absoluteUrl(productHref(product.slug));
-  const shippingRate = settings.delivery.countrywide ?? settings.delivery.nairobi;
   return {
     "@context": "https://schema.org",
     "@type": "Product",

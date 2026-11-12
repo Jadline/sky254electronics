@@ -10,7 +10,7 @@ export default async function CartPage() {
   return (
     <>
       <PageHeading title="Cart" />
-      <main className="mx-auto w-full max-w-[1860px] px-6 pt-[50px] pb-[90px] lg:pl-[324px]">
+      <main className="mx-auto w-full max-w-[1860px] px-6 pt-[50px] pb-[90px] max-sm:px-4 max-sm:pt-6 max-sm:pb-14 lg:pl-[324px]">
         <CartView products={products} />
       </main>
     </>

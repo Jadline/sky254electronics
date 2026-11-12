@@ -20,12 +20,17 @@ export function ProductTabs({
 
   return (
     <>
-      <div role="tablist" aria-label={label} className={filled ? "flex flex-wrap bg-tint" : "flex flex-wrap gap-8 border-b border-line"}>
+      {/* Phones: the tabs stay on one line and scroll sideways rather than stacking. */}
+      <div
+        role="tablist"
+        aria-label={label}
+        className={`flex overflow-x-auto [scrollbar-width:none] ${filled ? "bg-tint" : "gap-8 border-b border-line max-sm:gap-6"}`}
+      >
         {tabs.map((tab) => {
           const on = tab.id === active;
           const style = filled
-            ? `h-[46px] flex-[1_1_200px] text-[13px] font-medium uppercase ${on ? "bg-brand text-white" : "hover:text-brand"}`
-            : `-mb-px border-b-[3px] pb-3.5 text-base ${on ? "border-brand font-medium" : "border-transparent hover:text-brand"}`;
+            ? `h-[46px] flex-[1_0_auto] px-5 text-[13px] font-medium whitespace-nowrap uppercase max-sm:h-11 max-sm:px-4 max-sm:text-xs ${on ? "bg-brand text-white" : "hover:text-brand"}`
+            : `flex-none border-b-[3px] pb-3.5 text-base whitespace-nowrap max-sm:pb-3 max-sm:text-[15px] ${on ? "border-brand font-medium" : "border-transparent hover:text-brand"}`;
           return (
             <button
               key={tab.id}

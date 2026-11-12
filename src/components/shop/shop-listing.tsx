@@ -123,11 +123,12 @@ async function ShopResults({ searchParams, categorySlug }: { searchParams: Promi
   const activeCategory: Category | undefined = categories.find((c) => c.slug === filters.category) ?? products.find((p) => p.category.slug === filters.category)?.category;
   const title = filters.q ? `Results for “${filters.q}”` : (activeCategory?.name ?? "All products");
   const hasFilters = !!(filters.q || filters.category || filters.brands.length || filters.min || filters.max);
+  const filterCount = filters.brands.length + (filters.min ? 1 : 0) + (filters.max ? 1 : 0);
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-[26px]">
-        <div className="border-b border-line pb-[26px]">
+      <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-[26px] max-sm:px-4 max-sm:pt-4 max-sm:pb-5">
+        <div className="border-b border-line pb-[26px] max-sm:pb-4">
           <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1.5 text-[13px]">
             <Link href="/" className="hover:text-brand">Home</Link>
             <span aria-hidden="true">&gt;</span>
@@ -141,13 +142,26 @@ async function ShopResults({ searchParams, categorySlug }: { searchParams: Promi
               <span className="text-muted">Shop</span>
             )}
           </nav>
-          <h1 className="mt-3 text-[26px] font-normal">{title}</h1>
+          <h1 className="mt-3 text-[26px] font-normal max-sm:mt-2 max-sm:text-[22px]">{title}</h1>
           {!filters.q && activeCategory?.description && <p className="mt-2 max-w-[760px] text-sm text-body">{activeCategory.description}</p>}
         </div>
       </div>
 
-      <main className="mx-auto flex w-full max-w-[1860px] flex-wrap items-start gap-[30px] px-6 pb-20">
-        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-[30px] max-lg:flex-[1_1_100%]">
+      <main className="mx-auto flex w-full max-w-[1860px] flex-wrap items-start gap-[30px] px-6 pb-20 max-lg:gap-5 max-sm:px-4">
+        {/* Phones and tablets: categories and filters fold away behind this toggle, so the
+            products come first. No script needed: the checkbox opens the panel. */}
+        <input type="checkbox" id="shop-filters" className="peer sr-only" />
+        <label
+          htmlFor="shop-filters"
+          className="flex h-11 flex-[1_1_100%] cursor-pointer items-center justify-between border border-line px-4 text-[13px] font-medium uppercase peer-focus-visible:outline-2 peer-focus-visible:outline-brand lg:hidden"
+        >
+          <span>
+            Categories &amp; filters
+            {filterCount > 0 && <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-[11px] text-white">{filterCount}</span>}
+          </span>
+          <span aria-hidden="true" className="text-lg leading-none">+</span>
+        </label>
+        <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-[30px] max-lg:hidden max-lg:flex-[1_1_100%] max-lg:gap-5 peer-checked:max-lg:flex">
           <section>
             <SideTitle>Product categories</SideTitle>
             <div className="flex flex-col border border-line px-[22px] py-[18px]">
@@ -219,21 +233,21 @@ async function ShopResults({ searchParams, categorySlug }: { searchParams: Promi
         </aside>
 
         <div className="flex min-w-0 flex-[999_1_640px] flex-col gap-[22px]">
-          <div className="flex flex-wrap items-center gap-3.5">
-            <form action={basePath(filters.category)} className="flex flex-wrap gap-3.5">
+          <div className="flex flex-wrap items-center gap-3.5 max-sm:flex-nowrap max-sm:gap-2">
+            <form action={basePath(filters.category)} className="flex min-w-0 flex-wrap gap-3.5 max-sm:flex-1 max-sm:flex-nowrap max-sm:gap-2">
               <Hidden filters={filters} omit={["sort", "show"]} />
-              <AutoSubmitSelect name="sort" aria-label="Sort by" defaultValue={filters.sort} className="h-10 w-48 border border-line bg-white px-3.5 text-[13px]">
+              <AutoSubmitSelect name="sort" aria-label="Sort by" defaultValue={filters.sort} className="h-10 w-48 border border-line bg-white px-3.5 text-[13px] max-sm:w-auto max-sm:min-w-0 max-sm:flex-1 max-sm:px-2.5">
                 {SORTS.map((sort) => (
                   <option key={sort.value} value={sort.value}>{sort.label}</option>
                 ))}
               </AutoSubmitSelect>
-              <AutoSubmitSelect name="show" aria-label="Products per page" defaultValue={filters.show} className="h-10 w-28 border border-line bg-white px-3.5 text-[13px]">
+              <AutoSubmitSelect name="show" aria-label="Products per page" defaultValue={filters.show} className="h-10 w-28 border border-line bg-white px-3.5 text-[13px] max-sm:w-[92px] max-sm:px-2">
                 {SHOW_OPTIONS.map((n) => (
                   <option key={n} value={n}>Show: {n}</option>
                 ))}
               </AutoSubmitSelect>
             </form>
-            <div className="ml-auto flex gap-1.5">
+            <div className="ml-auto flex gap-1.5 max-sm:gap-0">
               {[
                 { view: "grid", label: "Grid view", path: "M3 3h5v5H3zM10 3h5v5h-5zM17 3h4v5h-4zM3 10h5v5H3zM10 10h5v5h-5zM17 10h4v5h-4zM3 17h5v4H3zM10 17h5v4h-5zM17 17h4v4h-4z" },
                 { view: "list", label: "List view", path: "M3 4h18v4H3zM3 10h18v4H3zM3 16h18v4H3z" },

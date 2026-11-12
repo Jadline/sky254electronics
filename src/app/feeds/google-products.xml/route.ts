@@ -1,5 +1,6 @@
 import { absoluteUrl, site } from "@/config/site";
-import { getProducts, getShopSettings } from "@/lib/catalog";
+import { getDelivery, getProducts } from "@/lib/catalog";
+import { shippingRate } from "@/lib/delivery";
 import { productHref, type Product } from "@/lib/types";
 
 /**
@@ -50,10 +51,9 @@ function item(product: Product & { priceKes: number }, shippingKes: number | nul
 }
 
 export async function GET() {
-  const [products, settings] = await Promise.all([getProducts(), getShopSettings()]);
+  const [products, delivery] = await Promise.all([getProducts(), getDelivery()]);
   const listable = products.filter((p): p is Product & { priceKes: number } => p.priceKes != null && p.photos.length > 0);
-  // The countrywide fee covers anywhere in Kenya; Nairobi is cheaper, but Google takes one rate here.
-  const shippingKes = settings.delivery.countrywide ?? settings.delivery.nairobi;
+  const shippingKes = shippingRate(delivery);
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">

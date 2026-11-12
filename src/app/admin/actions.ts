@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
+import { siteUrl } from "@/config/site";
 import { getAdmin, requireAdmin } from "@/lib/admin-auth";
 import { announce, CATALOG_TOPIC, orderTopic } from "@/lib/live";
 import { BADGES, MAX_BANNERS, MAX_SLIDER, SHORT_NAME_MAX } from "@/lib/home-rules";
@@ -88,6 +90,43 @@ export async function changePassword(_: FormState, form: FormData): Promise<Form
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: error.message };
   return { message: "Password changed." };
+}
+
+/** Whether this email belongs to someone in the admins table. There are only a few admins. */
+async function isAdminEmail(email: string) {
+  const db = createAdminClient();
+  const { data: admins } = await db.from("admins").select("user_id");
+  for (const { user_id } of admins ?? []) {
+    const { data } = await db.auth.admin.getUserById(user_id);
+    if (data.user?.email?.toLowerCase() === email) return true;
+  }
+  return false;
+}
+
+/**
+ * Emails a password reset link, but only to admins. The reply is the same either way,
+ * so the form can't be used to find out which emails are admins.
+ */
+export async function requestPasswordReset(_: FormState, form: FormData): Promise<FormState> {
+  const email = text(form, "email").toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Please enter your email address." };
+
+  if (await isAdminEmail(email)) {
+    // The link comes back to the address this form was opened on (localhost or the live site).
+    // Supabase only sends people to addresses listed under Auth > URL Configuration.
+    const origin = (await headers()).get("origin") ?? siteUrl;
+    const supabase = await createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/admin/auth/confirm` });
+    if (error) console.error("Password reset email failed:", error.message);
+  }
+  return { message: email };
+}
+
+/** Sets a new password after a reset link signed the admin in, then opens the dashboard. */
+export async function resetPassword(state: FormState, form: FormData): Promise<FormState> {
+  const result = await changePassword(state, form);
+  if (result.error) return result;
+  redirect("/admin");
 }
 
 // ---------- Products ----------
@@ -489,10 +528,14 @@ export async function updateOrder(_: FormState, form: FormData): Promise<FormSta
     // Keep any coupon discount when the fee changes.
     total_kes: order.subtotal_kes - (order.discount_kes ?? 0) + (fee ?? 0),
   };
-  // Only cash can be marked by hand. M-Pesa payments are confirmed by Safaricom.
-  if (order.payment_method === "cash") {
-    changes.payment_status = checked(form, "paid") ? "paid" : "unpaid";
+  // Cash is always marked by hand. So is M-Pesa paid straight to the shop, unless
+  // Safaricom has already sent a payment for this order, which then decides it.
+  let byHand = order.payment_method === "cash";
+  if (!byHand) {
+    const { count } = await supabase.from("mpesa_payments").select("id", { count: "exact", head: true }).eq("order_id", id);
+    byHand = (count ?? 0) === 0;
   }
+  if (byHand) changes.payment_status = checked(form, "paid") ? "paid" : "unpaid";
 
   const { error } = await supabase.from("orders").update(changes).eq("id", id);
   if (error) return { error: stockProblem(error) ?? "Couldn't save the order. Please try again." };
@@ -526,7 +569,7 @@ function parseUrl(raw: string): string | null | undefined {
   }
 }
 
-/** Shop details and delivery fees, shown around the site and used at checkout. */
+/** Shop details and social links, shown around the site. Delivery has its own page. */
 export async function saveShopSettings(_: FormState, form: FormData): Promise<FormState> {
   const { supabase } = await requireAdmin();
 
@@ -544,18 +587,6 @@ export async function saveShopSettings(_: FormState, form: FormData): Promise<Fo
     links[key] = url;
   }
 
-  const fees: Record<string, number | null> = {};
-  for (const [key, label] of [
-    ["nairobi_fee_kes", "Nairobi delivery fee"],
-    ["countrywide_fee_kes", "Countrywide delivery fee"],
-    ["free_delivery_over_kes", "Free delivery amount"],
-  ] as const) {
-    const fee = parsePrice(text(form, key));
-    if (fee === undefined) return { error: `${label} must be a whole number of shillings, or blank.` };
-    fees[key] = fee;
-  }
-  if (fees.free_delivery_over_kes === 0) fees.free_delivery_over_kes = null;
-
   const { error } = await supabase
     .from("shop_settings")
     .update({
@@ -563,12 +594,11 @@ export async function saveShopSettings(_: FormState, form: FormData): Promise<Fo
       address: optional(form, "address"),
       hours: optional(form, "hours"),
       ...links,
-      ...fees,
     })
     .eq("id", 1);
   if (error) return { error: "Couldn't save the settings. Please try again." };
   refreshCatalog();
-  return { message: "Saved. The shop shows the new details now." };
+  return { message: "Saved" };
 }
 
 // ---------- Newsletter ----------

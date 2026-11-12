@@ -7,6 +7,13 @@ export const site = {
   whatsapp: "254116236902" as string | null,
 };
 
+/** The shop's place for maps, from the address under Shop settings (or just Nairobi when it's empty). */
+export const shopPlace = (address: string | null) => (address ? `${address}, Nairobi, Kenya` : "Nairobi, Kenya");
+
+/** A Google Maps embed of that place, needing no API key. */
+export const mapEmbedUrl = (address: string | null) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(shopPlace(address))}&z=${address ? 17 : 12}&output=embed`;
+
 /**
  * The site's public address with no trailing slash, from SITE_URL (the same value
  * M-Pesa uses). Canonical links, the sitemap, structured data and the product feed

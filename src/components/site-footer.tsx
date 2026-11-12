@@ -23,7 +23,6 @@ const COLUMNS = [
       ["Track my order", "/track-order"],
       ["Wishlist", "/wishlist"],
       ["Returns & warranty", "/returns"],
-      ["FAQs", "/faqs"],
     ],
   },
 ];
@@ -52,7 +51,7 @@ export async function SiteFooter() {
 
   return (
     <footer className="relative mt-auto bg-ink text-white">
-      <div className="mx-auto flex w-full max-w-[1860px] flex-wrap gap-10 px-6 pt-16 pb-14">
+      <div className="mx-auto flex w-full max-w-[1860px] flex-wrap gap-10 px-6 pt-16 pb-14 max-sm:gap-x-6 max-sm:gap-y-9 max-sm:px-4 max-sm:pt-10 max-sm:pb-24">
         <div className="flex flex-[1_1_300px] flex-col gap-2.5 text-sm leading-relaxed text-on-ink">
           <span className="mb-[18px] text-3xl font-bold tracking-tight text-white">
             Sky<span className="text-accent">254</span>
@@ -82,8 +81,8 @@ export async function SiteFooter() {
         </div>
 
         {columns.map((column) => (
-          <div key={column.title} className="flex flex-[1_1_170px] flex-col gap-3.5 text-sm">
-            <h2 className="mt-2.5 mb-3 text-base font-medium">{column.title}</h2>
+          <div key={column.title} className="flex flex-[1_1_170px] flex-col gap-3.5 text-sm max-sm:flex-[1_1_140px] max-sm:gap-3">
+            <h2 className="mt-2.5 mb-3 text-base font-medium max-sm:mt-0 max-sm:mb-1">{column.title}</h2>
             {column.links.map(([label, href]) => (
               <Link key={label} href={href} className="text-on-ink transition-colors hover:text-white">
                 {label}
@@ -92,8 +91,8 @@ export async function SiteFooter() {
           </div>
         ))}
 
-        <div className="flex flex-[1_1_340px] flex-col gap-4">
-          <h2 className="mt-1 text-[28px] font-light">
+        <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-4 max-sm:flex-[1_1_100%]">
+          <h2 className="mt-1 text-[28px] font-light max-sm:text-2xl">
             Get our <span className="font-medium">new stock alerts</span>
           </h2>
           <p className="text-sm leading-relaxed text-on-ink">New phones, TVs and deals, once a week by email.</p>

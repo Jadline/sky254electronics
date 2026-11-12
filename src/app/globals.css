@@ -47,6 +47,16 @@ body {
   color: var(--color-text);
 }
 
+/* Phones zoom the whole page into any form field set smaller than 16px, and leave it
+   zoomed. Touch screens get at least 16px in fields, so tapping one keeps the layout still. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: max(1rem, 1em);
+  }
+}
+
 /* Product grids: column count per screen width. Extras are hidden so a row
    never ends in a gap. */
 .cg-side { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -71,14 +81,20 @@ body {
   .cg-side.two-rows > :nth-child(n + 7),
   .cg-full.one-row > :nth-child(n + 5) { display: none; }
 }
+/* Tablets: the sidebars have moved out of the way, so three cards fit. */
 @media (max-width: 900px) {
-  .cg-side, .cg-full { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cg-side, .cg-full { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cg-rows { grid-template-columns: repeat(1, minmax(0, 1fr)); }
   .cat6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .cg-side.one-row > :nth-child(n + 3) { display: none; }
+  .cg-full.one-row > :nth-child(n + 4) { display: none; }
 }
 /* Phones keep two cards per row, like the big shopping apps; one per row made each card
-   taller than the screen. */
+   taller than the screen. Rows sit closer together too. */
+@media (max-width: 639px) {
+  .cg-side, .cg-full { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; }
+  .cg-side.one-row > :nth-child(n + 3),
+  .cg-full.one-row > :nth-child(n + 3) { display: none; }
+}
 
 /* Motion. Entrances use "backwards" fill only: once finished they leave no
    transform behind, so they can't trap a card's hover panel under the next row. */
@@ -112,6 +128,12 @@ dialog::backdrop { background: rgb(29 33 40 / 0.6); }
 
 .tile img { transition: transform 0.25s ease; }
 .tile:hover img { transform: scale(1.07); }
+
+/* The scroll-driven animation below keeps each .reveal section its own stacking context,
+   which traps a product card's z-index inside it. A hovered card's action panel hangs
+   below the card, so without this the next section (banners, the next product row)
+   painted over it. Lifting the section the pointer or keyboard focus is in fixes that. */
+.reveal:is(:hover, :focus-within) { position: relative; z-index: 10; }
 
 @supports (animation-timeline: view()) {
   .reveal {

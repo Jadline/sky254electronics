@@ -1,9 +1,13 @@
 // Wording shared by checkout, the customer's order page and the dashboard.
 
+/**
+ * The kind of delivery an order has. The option's own name (from Delivery in the
+ * dashboard) is stored on the order too; these labels are for orders without one.
+ */
 export const DELIVERY_METHODS = {
-  nairobi: { label: "Delivery within Nairobi", hint: "We'll call to confirm the time and fee.", needsAddress: true },
-  countrywide: { label: "Countrywide courier", hint: "We'll call to confirm the courier and fee.", needsAddress: true },
-  pickup: { label: "Pick up from our shop", hint: "We'll call when it's ready to collect.", needsAddress: false },
+  nairobi: { label: "Delivery by our rider", needsAddress: true },
+  countrywide: { label: "Courier", needsAddress: true },
+  pickup: { label: "Pickup", needsAddress: false },
 } as const;
 export type DeliveryMethod = keyof typeof DELIVERY_METHODS;
 

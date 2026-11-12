@@ -13,7 +13,7 @@ export function ContactForm() {
 
   if (result?.ok) {
     return (
-      <div role="status" className="flex flex-col gap-2 bg-tint p-6">
+      <div role="status" className="flex flex-col gap-2 self-start bg-tint p-6">
         <p className="text-lg font-medium">Message sent</p>
         <p className="text-sm text-body">{result.message}</p>
       </div>
@@ -21,7 +21,7 @@ export function ContactForm() {
   }
 
   return (
-    <form action={action} aria-labelledby="contact-form-h" className="flex flex-col gap-4 border border-line p-6">
+    <form action={action} aria-labelledby="contact-form-h" className="flex flex-col gap-4">
       <div>
         <h2 id="contact-form-h" className="text-xl font-medium">Send us a message</h2>
         <p className="mt-1 text-sm text-muted">Give a phone number or an email address, and we&apos;ll reply there.</p>
@@ -66,7 +66,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={pending}
-        className="btn-lift h-11 cursor-pointer self-start rounded-full bg-brand px-8 text-[13px] font-medium text-white uppercase disabled:cursor-wait disabled:opacity-70"
+        className="btn-lift mt-1 h-12 w-full cursor-pointer bg-brand px-8 tracking-wide text-[13px] font-medium text-white uppercase disabled:cursor-wait disabled:opacity-70"
       >
         {pending ? "Sending…" : "Send message"}
       </button>

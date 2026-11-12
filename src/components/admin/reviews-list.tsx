@@ -37,15 +37,25 @@ export function ReviewsList({ rows }: { rows: ReviewRow[] }) {
   const [tab, setTab] = useState<ReviewRow["status"]>("pending");
   const [page, setPage] = useState(1);
   const [confirming, setConfirming] = useState<string | null>(null);
+  // Which review is being saved, and how, so only that button says "Approving…" etc.
+  const [busy, setBusy] = useState<{ id: string; action: "approved" | "hidden" | "delete" } | null>(null);
   const status = useAdminAction(setReviewStatus);
   const remove = useAdminAction(deleteReview);
   const notice = remove.notice ?? status.notice;
+  const working = status.pending || remove.pending;
+  const isBusy = (id: string, action: "approved" | "hidden" | "delete") => working && busy?.id === id && busy.action === action;
+
+  async function changeStatus(id: string, next: "approved" | "hidden") {
+    setBusy({ id, action: next });
+    await status.run(id, next);
+    setBusy(null);
+  }
 
   const visible = useMemo(() => rows.filter((r) => r.status === tab), [rows, tab]);
   const { pages, current, shown, summary } = paginate(visible, page, PAGE);
 
   return (
-    <section aria-labelledby="rev-h" className="max-w-5xl rounded-[20px] border border-adm-line bg-white">
+    <section aria-labelledby="rev-h" className="rounded-[20px] border border-adm-line bg-white">
       <h2 id="rev-h" className="sr-only">Reviews</h2>
       <div role="tablist" aria-label="Show" className="flex flex-wrap gap-1.5 border-b border-adm-line-soft px-[18px] py-4">
         {TABS.map((t) => (
@@ -103,28 +113,31 @@ export function ReviewsList({ rows }: { rows: ReviewRow[] }) {
               <p className="text-sm whitespace-pre-wrap text-adm-ink">{r.body}</p>
               <div className="flex flex-wrap gap-2">
                 {r.status !== "approved" && (
-                  <button type="button" disabled={status.pending} onClick={() => status.run(r.id, "approved")} className={buttonClass.small}>
-                    <CheckIcon className="size-4" aria-hidden /> Approve
+                  <button type="button" disabled={working} aria-busy={isBusy(r.id, "approved")} onClick={() => changeStatus(r.id, "approved")} className={buttonClass.small}>
+                    <CheckIcon className="size-4" aria-hidden /> {isBusy(r.id, "approved") ? "Approving…" : "Approve"}
                   </button>
                 )}
                 {r.status !== "hidden" && (
-                  <button type="button" disabled={status.pending} onClick={() => status.run(r.id, "hidden")} className={buttonClass.smallOutline}>
-                    <EyeSlashIcon className="size-4" aria-hidden /> Hide
+                  <button type="button" disabled={working} aria-busy={isBusy(r.id, "hidden")} onClick={() => changeStatus(r.id, "hidden")} className={buttonClass.smallOutline}>
+                    <EyeSlashIcon className="size-4" aria-hidden /> {isBusy(r.id, "hidden") ? "Hiding…" : "Hide"}
                   </button>
                 )}
                 <button
                   type="button"
-                  disabled={remove.pending}
-                  onClick={() => {
+                  disabled={working}
+                  aria-busy={isBusy(r.id, "delete")}
+                  onClick={async () => {
                     if (confirming !== r.id) return setConfirming(r.id);
                     setConfirming(null);
-                    remove.run(r.id);
+                    setBusy({ id: r.id, action: "delete" });
+                    await remove.run(r.id);
+                    setBusy(null);
                   }}
                   onBlur={() => setConfirming(null)}
                   className={`${buttonClass.smallOutline} text-[#b42318]`}
                 >
                   <TrashIcon className="size-4" aria-hidden />
-                  {confirming === r.id ? "Click again to delete" : "Delete"}
+                  {isBusy(r.id, "delete") ? "Deleting…" : confirming === r.id ? "Click again to delete" : "Delete"}
                 </button>
               </div>
             </li>

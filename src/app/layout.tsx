@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+import Script from "next/script";
 import { siteUrl } from "@/config/site";
 import "./globals.css";
 
@@ -33,7 +34,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${rubik.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        {children}
+        {/* CookieYes consent banner. It loads before the analytics tags so it can hold them back until the visitor agrees. */}
+        <Script
+          id="cookieyes"
+          src="https://cdn-cookieyes.com/client_data/72604d4879e68a40015de4f9cf4cde4f/script.js"
+          strategy="beforeInteractive"
+        />
+      </body>
     </html>
   );
 }

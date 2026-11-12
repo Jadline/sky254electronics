@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
       },
       // There are no customer accounts. Orders are looked up by number and phone.
       { source: "/login", destination: "/track-order", permanent: false },
+      // The dashboard's Pages section became Legal pages (About and Contact are no longer edited).
+      { source: "/admin/pages/:slug*", destination: "/admin/legal", permanent: false },
+      // The FAQs page was removed: About's "Why choose us?" answers the common questions.
+      { source: "/faqs", destination: "/about", permanent: true },
     ];
   },
   async headers() {

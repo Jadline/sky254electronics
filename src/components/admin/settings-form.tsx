@@ -1,13 +1,55 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { AtSymbolIcon, BuildingStorefrontIcon, TruckIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { useActionState, useRef, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { saveShopSettings, type FormState } from "@/app/admin/actions";
 import { buttonClass, FIELD, FormMessage } from "@/components/admin/ui";
+import { site } from "@/config/site";
 import type { SettingsRow } from "@/lib/settings";
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+
+/** One block of settings: what it is on the left, its fields on the right. */
+function Section({
+  id,
+  eyebrow,
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  icon: Icon;
+  title: string;
+  description: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm font-semibold">
+    <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-6 overflow-hidden rounded-[20px] border border-adm-line bg-white">
+      <div className="grid md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[272px_minmax(0,1fr)]">
+        <div className="flex items-start gap-3 border-b border-adm-line bg-adm-surface/60 px-5 py-4 md:border-r md:border-b-0 md:py-6">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-adm-tint text-adm-primary">
+            <Icon className="size-[18px]" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-adm-primary uppercase">{eyebrow}</p>
+            <h2 id={`${id}-h`} className="mt-0.5 text-base font-semibold text-adm-ink">
+              {title}
+            </h2>
+            <p className="mt-1 text-[13px] leading-relaxed text-adm-muted">{description}</p>
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-col gap-4 px-5 py-5 md:px-6 md:py-6">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+function Field({ label, hint, children, wide = false }: { label: string; hint?: ReactNode; children: ReactNode; wide?: boolean }) {
+  return (
+    <label className={`flex flex-col gap-1.5 text-sm font-semibold ${wide ? "sm:col-span-2" : ""}`}>
       {label}
       {children}
       {hint && <span className="text-[13px] font-normal text-adm-muted">{hint}</span>}
@@ -15,89 +57,128 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function Money({ name, value, placeholder }: { name: string; value: number | null; placeholder: string }) {
-  return (
-    <span className="flex items-center gap-2 rounded-[10px] border border-adm-line-strong bg-white px-3 focus-within:border-adm-primary focus-within:ring-2 focus-within:ring-adm-primary/20">
-      <span className="text-xs font-normal text-adm-muted">KSh</span>
-      <input name={name} inputMode="numeric" defaultValue={value ?? ""} placeholder={placeholder} className="min-w-0 flex-1 py-2.5 text-sm font-normal outline-0" />
-    </span>
+type Values = {
+  email: string;
+  hours: string;
+  address: string;
+  facebook_url: string;
+  instagram_url: string;
+  tiktok_url: string;
+};
+
+const toValues = (row: SettingsRow): Values => ({
+  email: row.email ?? "",
+  hours: row.hours ?? "",
+  address: row.address ?? "",
+  facebook_url: row.facebook_url ?? "",
+  instagram_url: row.instagram_url ?? "",
+  tiktok_url: row.tiktok_url ?? "",
+});
+
+const SOCIAL = [
+  ["facebook_url", "Facebook", "facebook.com/sky254"],
+  ["instagram_url", "Instagram", "instagram.com/sky254"],
+  ["tiktok_url", "TikTok", "tiktok.com/@sky254"],
+] as const;
+
+export function SettingsForm({ values: row }: { values: SettingsRow }) {
+  const [saved, setSaved] = useState(() => toValues(row));
+  const [form, setForm] = useState(saved);
+  const submitted = useRef(form);
+  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+  const set = <K extends keyof Values>(key: K, value: Values[K]) => setForm((f) => ({ ...f, [key]: value }));
+
+  // Once a save succeeds, what was sent becomes the saved version.
+  const [state, action, pending] = useActionState<FormState, FormData>(async (previous, data) => {
+    const sent = submitted.current;
+    const result = await saveShopSettings(previous, data);
+    if (result.message) setSaved(sent);
+    return result;
+  }, {});
+
+  const text = (key: keyof Values) => ({
+    name: key,
+    value: form[key],
+    onChange: (e: { target: { value: string } }) => set(key, e.target.value),
+    className: `${FIELD} font-normal`,
+  });
+
+  const footer = (
+    <div className="flex flex-wrap items-center gap-3">
+      <p role="status" className="min-w-0 flex-1 text-[13px]">
+        {state.error || state.message ? (
+          <FormMessage state={state} />
+        ) : dirty ? (
+          <span className="font-semibold text-[#b54708]">Unsaved changes</span>
+        ) : (
+          <span className="text-adm-muted">Everything is saved. The website shows changes straight away.</span>
+        )}
+      </p>
+      <button type="button" onClick={() => setForm(saved)} disabled={!dirty || pending} className={buttonClass.smallOutline}>
+        Discard changes
+      </button>
+      <button type="submit" disabled={!dirty || pending} className={buttonClass.small}>
+        {pending ? "Saving…" : "Save settings"}
+      </button>
+    </div>
   );
-}
 
-const CARD = "flex flex-col gap-4 rounded-[20px] border border-adm-line bg-white px-[22px] py-5";
-
-export function SettingsForm({ values }: { values: SettingsRow }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(saveShopSettings, {});
   return (
-    <form action={action} className="flex max-w-4xl flex-col gap-[18px]">
-      <section aria-labelledby="s-shop" className={CARD}>
-        <div>
-          <h2 id="s-shop" className="text-lg font-semibold">
-            Shop details
-          </h2>
-          <p className="mt-0.5 text-sm text-adm-muted">Shown in the footer, on the Home page and on order pages. Blank details are left out.</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Shop address" hint="The street and building. “Nairobi” is added for you.">
-            <input name="address" maxLength={160} defaultValue={values.address ?? ""} placeholder="e.g. Shop 12, Luthuli Avenue" className={`${FIELD} font-normal`} />
+    <form action={action} onSubmit={() => (submitted.current = form)} className="flex flex-col gap-[18px]">
+      <Section
+        id="contact"
+        eyebrow="Website"
+        icon={BuildingStorefrontIcon}
+        title="Contact details"
+        description="Shown in the header, footer, About and Contact pages, and on the order emails."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Email address" hint="Where the Contact page and emails tell customers to write.">
+            <input type="email" maxLength={200} placeholder="e.g. hello@sky254.co.ke" {...text("email")} />
           </Field>
           <Field label="Opening hours">
-            <input name="hours" maxLength={120} defaultValue={values.hours ?? ""} placeholder="e.g. Mon–Sat, 8am – 7pm" className={`${FIELD} font-normal`} />
+            <input maxLength={120} placeholder="e.g. Mon–Sat, 8am – 7pm" {...text("hours")} />
           </Field>
-          <Field label="Email address" hint="Where customers can write to you.">
-            <input name="email" type="email" maxLength={200} defaultValue={values.email ?? ""} placeholder="e.g. hello@sky254.co.ke" className={`${FIELD} font-normal`} />
+          <Field
+            label="Shop address"
+            wide
+            hint="Type it the way you would search for it in Google Maps. The About and Contact pages show it on a map; leave empty to show Nairobi."
+          >
+            <input maxLength={160} placeholder="e.g. Shop 12, Luthuli Avenue" {...text("address")} />
           </Field>
         </div>
-      </section>
+        <p className="rounded-xl bg-adm-surface px-3.5 py-2.5 text-[13px] text-adm-muted">
+          Phone and WhatsApp: <span className="font-semibold text-adm-ink">{site.phone}</span>. These are part of the site&apos;s code, so ask your developer
+          to change them.
+        </p>
+      </Section>
 
-      <section aria-labelledby="s-social" className={CARD}>
-        <div>
-          <h2 id="s-social" className="text-lg font-semibold">
-            Social media
-          </h2>
-          <p className="mt-0.5 text-sm text-adm-muted">Paste the link to each page. Its icon shows in the footer once it has a link.</p>
+      <Section id="social" eyebrow="Website" icon={AtSymbolIcon} title="Social profiles" description="Leave a field empty to hide that icon in the footer.">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SOCIAL.map(([key, label, placeholder]) => (
+            <Field key={key} label={label}>
+              <input placeholder={placeholder} {...text(key)} />
+            </Field>
+          ))}
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Field label="Facebook">
-            <input name="facebook_url" defaultValue={values.facebook_url ?? ""} placeholder="facebook.com/sky254" className={`${FIELD} font-normal`} />
-          </Field>
-          <Field label="Instagram">
-            <input name="instagram_url" defaultValue={values.instagram_url ?? ""} placeholder="instagram.com/sky254" className={`${FIELD} font-normal`} />
-          </Field>
-          <Field label="TikTok">
-            <input name="tiktok_url" defaultValue={values.tiktok_url ?? ""} placeholder="tiktok.com/@sky254" className={`${FIELD} font-normal`} />
-          </Field>
-        </div>
-      </section>
+      </Section>
 
-      <section aria-labelledby="s-delivery" className={CARD}>
-        <div>
-          <h2 id="s-delivery" className="text-lg font-semibold">
-            Delivery fees
-          </h2>
-          <p className="mt-0.5 text-sm text-adm-muted">
-            Added to orders at checkout. Leave a fee blank to confirm it by phone instead. Pickup from the shop is always free, and you can still
-            change the fee on any order.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Field label="Delivery within Nairobi">
-            <Money name="nairobi_fee_kes" value={values.nairobi_fee_kes} placeholder="e.g. 300" />
-          </Field>
-          <Field label="Countrywide courier">
-            <Money name="countrywide_fee_kes" value={values.countrywide_fee_kes} placeholder="e.g. 600" />
-          </Field>
-          <Field label="Free delivery from" hint="Orders of this amount or more deliver free. Blank for none.">
-            <Money name="free_delivery_over_kes" value={values.free_delivery_over_kes} placeholder="e.g. 20000" />
-          </Field>
-        </div>
-      </section>
+      <Section id="delivery" eyebrow="Checkout" icon={TruckIcon} title="Delivery fees" description="Delivery areas, pickup points and free delivery.">
+        <p className="text-sm text-adm-body">
+          Fees, pickup points and the free-delivery amount are set under{" "}
+          <Link href="/admin/delivery" className="font-semibold text-adm-primary hover:underline">
+            Delivery
+          </Link>
+          . The wording of the delivery policy is under{" "}
+          <Link href="/admin/legal/delivery" className="font-semibold text-adm-primary hover:underline">
+            Legal pages
+          </Link>
+          .
+        </p>
+      </Section>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className={buttonClass.primary}>
-          {pending ? "Saving…" : "Save settings"}
-        </button>
-        <FormMessage state={state} />
+      <div className="sticky bottom-0 z-10 -mx-1 rounded-[20px] border border-adm-line bg-white/95 px-5 py-3.5 shadow-[0_-8px_24px_rgba(11,27,51,0.06)] backdrop-blur">
+        {footer}
       </div>
     </form>
   );

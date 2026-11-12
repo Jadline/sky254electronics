@@ -13,7 +13,7 @@ export default function TrackOrderPage() {
   return (
     <>
       <PageHeading title="Track my order" />
-      <main className="mx-auto w-full max-w-[1860px] px-6 pt-[50px] pb-[90px] lg:pl-[324px]">
+      <main className="mx-auto w-full max-w-[1860px] px-6 pt-[50px] pb-[90px] max-sm:px-4 max-sm:pt-6 max-sm:pb-14 lg:pl-[324px]">
         <div className="flex max-w-[1000px] flex-wrap items-start gap-[30px]">
           <section className="flex min-w-0 flex-[1_1_420px] flex-col gap-5 border border-line p-6">
             <div>

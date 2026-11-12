@@ -31,7 +31,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       onMouseLeave={() => (paused.current = false)}
       onFocus={() => (paused.current = true)}
       onBlur={() => (paused.current = false)}
-      className="relative flex min-h-[420px] min-w-0 flex-[1_1_440px] flex-col overflow-hidden bg-tint px-10 pt-14 pb-10 max-sm:px-6"
+      className="relative flex min-h-[420px] min-w-0 flex-[1_1_440px] flex-col overflow-hidden bg-tint px-10 pt-14 pb-10 max-sm:min-h-[330px] max-sm:px-5 max-sm:pb-4"
     >
       {slides.map((slide, i) => {
         const on = i === active;
@@ -39,7 +39,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           <div
             key={slide.href}
             aria-hidden={!on}
-            className={`absolute inset-0 flex flex-col bg-tint px-10 pt-14 pb-10 transition-[opacity,visibility] duration-300 max-sm:px-6 ${on ? "visible opacity-100" : "invisible opacity-0"}`}
+            className={`absolute inset-0 flex flex-col bg-tint px-10 pt-14 pb-10 transition-[opacity,visibility] duration-300 max-sm:px-5 max-sm:pt-9 ${on ? "visible opacity-100" : "invisible opacity-0"}`}
           >
             <div className="relative z-10 flex flex-col items-start">
               <span className={`text-xs font-medium tracking-[0.12em] text-brand uppercase transition-transform duration-300 ${on ? "" : "translate-y-3.5"}`}>
@@ -59,7 +59,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                 Shop now
               </Link>
             </div>
-            <div className="absolute right-6 bottom-12 h-[72%] w-[46%]">
+            <div className="absolute right-6 bottom-12 h-[72%] w-[46%] max-sm:right-3 max-sm:bottom-10 max-sm:h-[62%]">
               <Image
                 src={slide.image.src}
                 alt={slide.image.alt}

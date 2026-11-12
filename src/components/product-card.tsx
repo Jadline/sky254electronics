@@ -6,7 +6,7 @@ import { QuickView } from "@/components/quick-view";
 import { priceText, productHref, type Product } from "@/lib/types";
 import { priceTone } from "@/lib/pricing";
 
-const CARD_SIZES = "(max-width: 900px) 50vw, 320px";
+const CARD_SIZES = "(max-width: 639px) 50vw, (max-width: 900px) 34vw, 320px";
 
 /** Standard grid card: clean photo by default, box photo and actions on hover. */
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {

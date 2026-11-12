@@ -25,7 +25,7 @@ export function CartView({ products }: { products: Product[] }) {
   const whatsapp = whatsappLink(`Hi Sky254, I'd like to order:\n${order}\nSubtotal: ${formatKes(subtotal)}`);
 
   return (
-    <div className="flex max-w-[1000px] flex-col gap-[30px]">
+    <div className="flex min-w-0 max-w-[1000px] flex-col gap-[30px] max-sm:gap-5">
       <CheckoutSteps current={0} />
 
       {unavailable.length > 0 && (
@@ -53,7 +53,45 @@ export function CartView({ products }: { products: Product[] }) {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto border border-line">
+          <div className="border border-line">
+            {/* Phones: one card per item, with every control in view. */}
+            <ul className="sm:hidden">
+              {lines.map(({ product, qty, price }) => {
+                const image = product.photo ?? product.boxPhoto;
+                return (
+                  <li key={product.slug} className="flex gap-3.5 border-b border-line p-4">
+                    <span className="relative block size-20 flex-none">
+                      {image && <Image src={image.src} alt="" fill sizes="80px" className={product.photo ? "object-contain" : "object-cover"} />}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <div className="flex items-start gap-2">
+                        <Link href={productHref(product.slug)} className="line-clamp-2 flex-1 text-sm leading-snug font-medium transition-colors hover:text-brand">
+                          {product.name}
+                        </Link>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${product.name}`}
+                          onClick={() => removeFromCart(product.slug)}
+                          className="-mt-2 -mr-2 flex size-10 flex-none cursor-pointer items-center justify-center text-muted"
+                        >
+                          <CloseIcon className="size-4" strokeWidth={2.5} />
+                        </button>
+                      </div>
+                      <span className="text-[13px] text-muted">{formatKes(price)} each</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <div role="group" aria-label={`Quantity for ${product.name}`} className="inline-flex h-10 items-center border border-line">
+                          <button type="button" aria-label="Decrease quantity" onClick={() => setCartQty(product.slug, qty - 1)} className="h-full w-10 cursor-pointer">−</button>
+                          <span className="min-w-[30px] text-center font-medium">{qty}</span>
+                          <button type="button" aria-label="Increase quantity" onClick={() => setCartQty(product.slug, qty + 1)} className="h-full w-10 cursor-pointer">+</button>
+                        </div>
+                        <span className="font-medium whitespace-nowrap text-brand">{formatKes(price * qty)}</span>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="overflow-x-auto max-sm:hidden">
             <table className="w-full min-w-[640px] text-[15px]">
               <thead>
                 <tr className="border-b border-line text-left">
@@ -104,7 +142,8 @@ export function CartView({ products }: { products: Product[] }) {
                 })}
               </tbody>
             </table>
-            <div className="flex flex-wrap items-center justify-between gap-3.5 border-t border-line px-[30px] py-5">
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3.5 border-t border-line px-[30px] py-5 max-sm:border-t-0 max-sm:px-4 max-sm:py-4">
               <Link href="/shop" className="text-sm font-medium text-brand">← Continue shopping</Link>
               <button type="button" onClick={clearCart} className="cursor-pointer text-sm text-muted transition-colors hover:text-text">
                 Empty cart
@@ -113,8 +152,8 @@ export function CartView({ products }: { products: Product[] }) {
           </div>
 
           <div className="border border-line">
-            <h2 className="border-b border-line px-[30px] py-[18px] text-center text-[15px] font-medium uppercase">Cart totals</h2>
-            <div className="flex flex-col gap-5 px-[30px] pt-6 pb-[30px]">
+            <h2 className="border-b border-line px-[30px] py-[18px] text-center text-[15px] font-medium uppercase max-sm:py-3.5">Cart totals</h2>
+            <div className="flex flex-col gap-5 px-[30px] pt-6 pb-[30px] max-sm:gap-4 max-sm:px-4 max-sm:pt-5 max-sm:pb-5">
               <div className="flex flex-wrap justify-between gap-2.5">
                 <span className="text-[15px] text-body uppercase">Subtotal</span>
                 <span className="text-[19px] text-brand">{formatKes(subtotal)}</span>

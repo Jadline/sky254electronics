@@ -13,7 +13,8 @@ function Count({ value }: { value: number }) {
   );
 }
 
-export function HeaderCounts() {
+/** `compact` is the phone header: the cart total only shows when there's room for it. */
+export function HeaderCounts({ compact = false }: { compact?: boolean }) {
   const { cart, wishlist } = useShop();
   const items = cart.reduce((sum, line) => sum + line.qty, 0);
   const total = cart.reduce((sum, line) => sum + line.priceKes * line.qty, 0);
@@ -37,7 +38,7 @@ export function HeaderCounts() {
           <BagIcon className="size-6" strokeWidth={1.5} />
           <Count value={items} />
         </span>
-        <span className="text-[15px] font-medium whitespace-nowrap">{formatKes(total)}</span>
+        <span className={`text-[15px] font-medium whitespace-nowrap ${compact ? "max-sm:hidden" : ""}`}>{formatKes(total)}</span>
       </Link>
     </>
   );

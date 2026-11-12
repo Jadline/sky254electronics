@@ -1,6 +1,6 @@
 import "server-only";
 import { site } from "@/config/site";
-import { DELIVERY_METHODS, formatPhone, type DeliveryMethod } from "@/lib/order-labels";
+import { formatPhone } from "@/lib/order-labels";
 import { formatKes } from "@/lib/types";
 
 // Every message here is best effort and never throws: the order is already saved and
@@ -46,7 +46,8 @@ type OrderAlert = {
   orderNumber: string;
   customerName: string;
   customerPhone: string;
-  deliveryMethod: DeliveryMethod;
+  /** The delivery option or pickup point chosen. */
+  deliveryName: string;
   deliveryAddress: string | null;
   notes: string | null;
   subtotalKes: number;
@@ -76,7 +77,7 @@ export async function sendOrderAlert(order: OrderAlert) {
   const html = `
     <h2>New order ${escapeHtml(order.orderNumber)}</h2>
     <p><strong>${escapeHtml(order.customerName)}</strong>, ${escapeHtml(formatPhone(order.customerPhone))}</p>
-    <p>${escapeHtml(DELIVERY_METHODS[order.deliveryMethod].label)}${order.deliveryAddress ? `: ${escapeHtml(order.deliveryAddress)}` : ""}</p>
+    <p>${escapeHtml(order.deliveryName)}${order.deliveryAddress ? `: ${escapeHtml(order.deliveryAddress)}` : ""}</p>
     <ul>${rows}</ul>
     ${discount ? `<p>Coupon ${escapeHtml(order.couponCode ?? "")}: −${formatKes(discount)}</p>` : ""}
     <p><strong>${total}</p>

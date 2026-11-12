@@ -60,7 +60,7 @@ async function OrderDetail({ params }: { params: Params }) {
   const activity: { title: string; text: string; when?: string; tone?: "done" | "failed" }[] = [
     {
       title: "Order placed",
-      text: `On the website · ${DELIVERY[method].label} · ${PAYMENT_METHOD[payMethod]}`,
+      text: `On the website · ${order.delivery_option_name ?? DELIVERY[method].label} · ${PAYMENT_METHOD[payMethod]}`,
       when: order.created_at,
     },
     ...payments.map((p) => ({
@@ -228,6 +228,7 @@ async function OrderDetail({ params }: { params: Params }) {
             deliveryFee={order.delivery_fee_kes}
             subtotal={order.subtotal_kes - (order.discount_kes ?? 0)}
             isCash={payMethod === "cash"}
+            canMarkPaid={payMethod === "cash" || payments.length === 0}
             isPaid={order.payment_status === "paid"}
             paymentLabel={`${PAYMENT_METHOD[payMethod]} · ${pay.label}`}
           />
@@ -289,7 +290,10 @@ async function OrderDetail({ params }: { params: Params }) {
             <h2 id="addr-h" className="mb-2.5 text-lg font-semibold">
               {isPickup ? "Pickup" : "Delivery address"}
             </h2>
-            <p className="text-sm">{DELIVERY[method].label}</p>
+            <p className="text-sm">
+              {order.delivery_option_name ?? DELIVERY[method].label}
+              {order.delivery_option_name && <span className="text-adm-muted"> · {DELIVERY[method].short}</span>}
+            </p>
             {order.delivery_address && <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap text-adm-body">{order.delivery_address}</p>}
             {order.notes && (
               <p className="mt-2.5 rounded-xl bg-adm-surface px-3 py-2.5 text-[13px] whitespace-pre-wrap text-adm-body">

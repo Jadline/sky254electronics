@@ -34,15 +34,16 @@ async function OrderDetails({ params }: { params: Params }) {
   const { token } = await params;
   if (!/^[A-Za-z0-9_-]{32}$/.test(token)) notFound();
 
+  const db = createAdminClient();
   const [{ data: order }, settings] = await Promise.all([
-    createAdminClient()
-      .from("orders")
-      .select("*, order_items(product_name, price_kes, qty, line_total_kes)")
-      .eq("access_token", token)
-      .maybeSingle(),
+    db.from("orders").select("*, order_items(product_name, price_kes, qty, line_total_kes)").eq("access_token", token).maybeSingle(),
     getShopSettings(),
   ]);
   if (!order) notFound();
+  // Where to collect a pickup order, if the pickup point still exists.
+  const { data: point } = order.pickup_point_id
+    ? await db.from("pickup_points").select("address, hours").eq("id", order.pickup_point_id).maybeSingle()
+    : { data: null };
 
   const status = order.status as OrderStatus;
   const method = order.delivery_method as DeliveryMethod;
@@ -117,14 +118,23 @@ async function OrderDetails({ params }: { params: Params }) {
         <section className="flex min-w-0 flex-[1_1_300px] flex-col gap-4 border border-line p-6 text-sm">
           <div>
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Delivery</h2>
-            <p>{DELIVERY_METHODS[method].label}</p>
+            <p>{order.delivery_option_name ?? DELIVERY_METHODS[method].label}</p>
             {order.delivery_address && <p className="text-body">{order.delivery_address}</p>}
-            {method === "pickup" && <p className="text-body">{settings.address ? `${settings.address}, Nairobi` : "Our Nairobi shop"}</p>}
+            {method === "pickup" &&
+              (point ? (
+                [point.address, point.hours].filter(Boolean).map((line) => <p key={line} className="text-body">{line}</p>)
+              ) : !order.pickup_point_id ? (
+                <p className="text-body">{settings.address ? `${settings.address}, Nairobi` : "Our Nairobi shop"}</p>
+              ) : null)}
           </div>
           <div>
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Payment</h2>
             <p>{PAYMENT_STATUSES[order.payment_status as PaymentStatus]}</p>
-            {order.payment_status === "unpaid" && <p className="text-body">Pay by M-Pesa or cash. We&apos;ll explain when we call.</p>}
+            {order.payment_status === "unpaid" && (
+              <p className="text-body">
+                {order.payment_method === "mpesa" ? "Pay by M-Pesa before we send it. We'll explain when we call." : "Pay by M-Pesa or cash. We'll explain when we call."}
+              </p>
+            )}
           </div>
           <div>
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Questions?</h2>
@@ -141,7 +151,7 @@ async function OrderDetails({ params }: { params: Params }) {
 
 export default function OrderPage({ params }: { params: Params }) {
   return (
-    <main className="mx-auto w-full max-w-[1860px] flex-1 px-6 pt-[50px] pb-[90px] lg:pl-[324px]">
+    <main className="mx-auto w-full max-w-[1860px] flex-1 px-6 pt-[50px] pb-[90px] max-sm:px-4 max-sm:pt-6 max-sm:pb-14 lg:pl-[324px]">
       <Suspense fallback={<p className="text-muted">Loading your order…</p>}>
         <OrderDetails params={params} />
       </Suspense>

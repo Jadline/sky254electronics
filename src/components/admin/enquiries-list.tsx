@@ -48,7 +48,7 @@ export function EnquiriesList({ rows }: { rows: EnquiryRow[] }) {
   const { pages, current, shown, summary } = paginate(visible, page, PAGE);
 
   return (
-    <section aria-labelledby="enq-h" className="max-w-5xl rounded-[20px] border border-adm-line bg-white">
+    <section aria-labelledby="enq-h" className="rounded-[20px] border border-adm-line bg-white">
       <h2 id="enq-h" className="sr-only">Messages</h2>
       <div className="flex flex-wrap items-center gap-3 border-b border-adm-line-soft px-[18px] py-4">
         <div role="tablist" aria-label="Show" className="flex gap-1.5">

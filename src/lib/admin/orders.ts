@@ -47,9 +47,9 @@ export const PAYMENT_STATE: Record<PaymentState, { label: string; tone: Tone }> 
 export const PAYMENT_METHOD: Record<PaymentMethod, string> = { mpesa: "M-Pesa", cash: "Cash on delivery" };
 
 export const DELIVERY: Record<DeliveryMethod, { label: string; short: string; color: string }> = {
-  nairobi: { label: "Delivery within Nairobi", short: "Nairobi", color: "#0669d6" },
-  countrywide: { label: "Countrywide courier", short: "Countrywide", color: "#5b4fa8" },
-  pickup: { label: "Pick up from the shop", short: "Pickup", color: "#f0643c" },
+  nairobi: { label: "Delivery by our rider", short: "Own rider", color: "#0669d6" },
+  countrywide: { label: "Courier", short: "Courier", color: "#5b4fa8" },
+  pickup: { label: "Pickup", short: "Pickup", color: "#f0643c" },
 };
 
 export type { OrderStatus, PaymentStatus, PaymentMethod, DeliveryMethod };

@@ -12,7 +12,8 @@ import { ProductCard, ProductCardMini } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
 import { SideTitle } from "@/components/side-title";
 import { site } from "@/config/site";
-import { getCategories, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
+import { getCategories, getDelivery, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
+import { shippingRate } from "@/lib/delivery";
 import { summarise } from "@/lib/reviews";
 import { ProductReviews } from "@/components/product/product-reviews";
 import { Stars } from "@/components/product/stars";
@@ -84,7 +85,7 @@ function ProductRow({ title, items }: { title: string; items: Product[] }) {
 
 async function ProductDetails({ params }: { params: Params }) {
   const { slug } = await params;
-  const [products, categories, settings, allReviews] = await Promise.all([getProducts(), getCategories(), getShopSettings(), getReviews()]);
+  const [products, categories, settings, allReviews, delivery] = await Promise.all([getProducts(), getCategories(), getShopSettings(), getReviews(), getDelivery()]);
   const product = products.find((p) => p.slug === slug);
   if (!product) notFound();
   const reviews = summarise(allReviews.filter((r) => r.productSlug === slug));
@@ -111,8 +112,8 @@ async function ProductDetails({ params }: { params: Params }) {
   const panel = "fade-up border border-t-0 border-line px-8 py-7 max-md:px-5 max-md:py-5";
 
   return (
-    <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-20">
-      <JsonLd data={productJsonLd(product, settings, reviews)} />
+    <div className="mx-auto w-full max-w-[1860px] px-6 pt-[22px] pb-20 max-sm:px-4 max-sm:pt-4 max-sm:pb-14">
+      <JsonLd data={productJsonLd(product, shippingRate(delivery), reviews)} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -123,7 +124,7 @@ async function ProductDetails({ params }: { params: Params }) {
       <TrackProductView
         item={{ id: product.slug, name: product.name, priceKes: product.priceKes, brand: product.brand, category: product.category.name }}
       />
-      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1.5 border-b border-line pb-[22px] text-[13px]">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1.5 border-b border-line pb-[22px] text-[13px] max-sm:pb-3.5 max-sm:text-xs">
         <Link href="/" className="hover:text-brand">Home</Link>
         <span aria-hidden="true">&gt;</span>
         <Link href={categoryHref(product.category.slug)} className="hover:text-brand">{product.category.name}</Link>
@@ -131,9 +132,10 @@ async function ProductDetails({ params }: { params: Params }) {
         <span className="text-muted">{product.name}</span>
       </nav>
 
-      <div className="mt-[34px] flex flex-wrap items-start gap-[30px]">
+      <div className="mt-[34px] flex flex-wrap items-start gap-[30px] max-sm:mt-5">
         <aside className="flex min-w-60 flex-[0_1_270px] flex-col gap-[30px] max-lg:order-last max-lg:flex-[1_1_100%]">
-          <section>
+          {/* Phones and tablets reach every department from the header menu. */}
+          <section className="max-lg:hidden">
             <SideTitle>Product categories</SideTitle>
             <nav aria-label="Product categories" className="flex flex-col border border-line px-[22px] py-[18px]">
               {categories.map((category) => {
@@ -175,14 +177,14 @@ async function ProductDetails({ params }: { params: Params }) {
           <ServiceList />
         </aside>
 
-        <main className="flex min-w-0 flex-[999_1_640px] flex-col gap-[50px]">
-          <section className="fade-up flex flex-wrap items-start gap-[30px]">
+        <main className="flex min-w-0 flex-[999_1_640px] flex-col gap-[50px] max-sm:gap-9">
+          <section className="fade-up flex flex-wrap items-start gap-[30px] max-sm:gap-5">
             <div className="flex min-w-0 max-w-[620px] flex-[1_1_420px]">
               <ProductGallery product={product} />
             </div>
 
             <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-4">
-              <h1 className="text-[26px] leading-tight font-medium text-brand">{product.name}</h1>
+              <h1 className="text-[26px] leading-tight font-medium text-brand max-sm:text-[22px]">{product.name}</h1>
               {reviews.count > 0 && (
                 <a href="#product-info" className="flex items-center gap-2 text-[13px] text-muted hover:text-brand">
                   <Stars rating={reviews.average} className="size-3.5" />
@@ -210,7 +212,7 @@ async function ProductDetails({ params }: { params: Params }) {
                 {product.inStock ? "In stock" : "Sold out"}
               </span>
 
-              <div className="flex max-w-[360px] flex-col gap-[18px] pt-2">
+              <div className="flex max-w-[360px] flex-col gap-[18px] pt-2 max-lg:max-w-none">
                 <BuyBox product={product} />
               </div>
 
@@ -259,8 +261,8 @@ async function ProductDetails({ params }: { params: Params }) {
                       <tbody>
                         {specs.map(([key, value]) => (
                           <tr key={key} className="border-b border-line last:border-b-0">
-                            <th scope="row" className="w-2/5 border-r border-line px-5 py-4 text-left text-xs font-medium uppercase">{key}</th>
-                            <td className="px-5 py-4 text-body">{value}</td>
+                            <th scope="row" className="w-2/5 border-r border-line px-5 py-4 text-left text-xs font-medium uppercase max-sm:px-3 max-sm:py-3">{key}</th>
+                            <td className="px-5 py-4 text-body max-sm:px-3 max-sm:py-3">{value}</td>
                           </tr>
                         ))}
                       </tbody>
