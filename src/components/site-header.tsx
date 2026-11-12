@@ -5,6 +5,7 @@ import { categoryHref } from "@/lib/types";
 import { HeaderCounts } from "@/components/header-counts";
 import { MobileMenu } from "@/components/mobile-menu";
 import { ChatIcon, MenuIcon, TruckIcon } from "@/components/icons";
+import { LogoMark } from "@/components/logo-mark";
 
 const NAV = [
   { label: "Phones", slug: "smartphones" },
@@ -51,8 +52,14 @@ export async function SiteHeader() {
           phone={site.phone}
           whatsapp={whatsapp}
         />
-        <Link href="/" aria-label="Sky254 home" className="text-3xl leading-none font-bold tracking-tight text-text max-sm:text-[26px]">
-          Sky<span className="text-brand">254</span>
+        <Link href="/" aria-label="Sky254 home" className="flex items-center gap-1.5 text-3xl leading-none font-bold tracking-tight text-text max-sm:text-[26px]">
+          <LogoMark className="h-12 w-auto flex-none max-sm:h-10" />
+          <span className="flex flex-col gap-1.5">
+            <span>
+              Sky<span className="text-brand">254</span>
+            </span>
+            <span className="pl-px text-[10px] font-bold tracking-[0.42em] text-[#4a5566] max-sm:text-[9px]">ELECTRONICS</span>
+          </span>
         </Link>
         <nav aria-label="Main" className="flex flex-1 flex-wrap items-center gap-x-[34px] gap-y-2 pt-1 text-[13px] font-medium uppercase max-lg:hidden">
           <Link href="/" className="transition-colors hover:text-brand">Home</Link>

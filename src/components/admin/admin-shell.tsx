@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { logout } from "@/app/admin/actions";
+import { LogoMark } from "@/components/logo-mark";
 
 export type BadgeKey = "orders" | "payments" | "enquiries" | "reviews";
 
@@ -98,8 +99,8 @@ function NavLinks({ badges, onNavigate, pathname }: NavProps & { pathname: strin
 function Brand() {
   return (
     <Link href="/admin" className="flex items-center gap-2.5 px-2 py-1 text-adm-ink">
-      <span aria-hidden className="flex size-9 items-center justify-center rounded-[10px] bg-adm-primary text-[15px] font-bold text-white">
-        S
+      <span aria-hidden className="flex size-9 items-center justify-center rounded-[10px] bg-[#0b1b33]">
+        <LogoMark dark background="#0b1b33" className="h-7 w-auto" />
       </span>
       <span className="flex flex-col leading-[1.1]">
         <span className="text-xl font-bold tracking-[-0.4px]">

@@ -8,17 +8,18 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ShopIllustration } from "@/components/admin/auth-illustrations";
+import { LogoMark } from "@/components/logo-mark";
 
 function Logo({ onBlue = false }: { onBlue?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
       <span
         aria-hidden
-        className={`flex size-10 items-center justify-center rounded-[11px] text-base font-bold ${
-          onBlue ? "bg-white text-adm-primary shadow-[0_6px_20px_rgba(0,0,0,0.15)]" : "bg-adm-primary text-white"
+        className={`flex size-10 items-center justify-center rounded-[11px] ${
+          onBlue ? "bg-white shadow-[0_6px_20px_rgba(0,0,0,0.15)]" : "bg-[#0b1b33]"
         }`}
       >
-        S
+        {onBlue ? <LogoMark className="h-8 w-auto" /> : <LogoMark dark background="#0b1b33" className="h-8 w-auto" />}
       </span>
       <span className="flex flex-col leading-[1.1]">
         <span className="text-xl font-bold tracking-[-0.4px]">

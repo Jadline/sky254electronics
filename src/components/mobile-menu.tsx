@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { ChevronRightIcon, CloseIcon, MenuIcon, TruckIcon } from "@/components/icons";
+import { LogoMark } from "@/components/logo-mark";
 
 type MenuLink = { label: string; href: string };
 
@@ -35,8 +36,14 @@ export function MobileMenu({ main, departments, phone, whatsapp }: { main: MenuL
         className="m-0 h-dvh max-h-none w-[86vw] max-w-sm overflow-y-auto overscroll-contain bg-white p-0 text-text"
       >
         <div className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-line bg-white pr-2 pl-5">
-          <span className="text-2xl leading-none font-bold tracking-tight">
-            Sky<span className="text-brand">254</span>
+          <span className="flex items-center gap-2 text-2xl leading-none font-bold tracking-tight">
+            <LogoMark className="h-8 w-auto flex-none" />
+            <span className="flex flex-col gap-1">
+              <span>
+                Sky<span className="text-brand">254</span>
+              </span>
+              <span className="pl-px text-[8px] font-bold tracking-[0.42em] text-[#4a5566]">ELECTRONICS</span>
+            </span>
           </span>
           <button type="button" aria-label="Close menu" onClick={close} className="flex size-11 cursor-pointer items-center justify-center">
             <CloseIcon className="size-6" />

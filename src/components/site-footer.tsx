@@ -4,6 +4,7 @@ import { getCategories, getShopSettings } from "@/lib/catalog";
 import { categoryHref } from "@/lib/types";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ChatIcon, ChevronUpIcon } from "@/components/icons";
+import { LogoMark } from "@/components/logo-mark";
 
 const COLUMNS = [
   {
@@ -54,8 +55,14 @@ export async function SiteFooter() {
     <footer className="relative mt-auto bg-ink text-white">
       <div className="mx-auto flex w-full max-w-[1860px] flex-wrap gap-10 px-6 pt-16 pb-14 max-sm:gap-x-6 max-sm:gap-y-9 max-sm:px-4 max-sm:pt-10 max-sm:pb-24">
         <div className="flex flex-[1_1_300px] flex-col gap-2.5 text-sm leading-relaxed text-on-ink">
-          <span className="mb-[18px] text-3xl font-bold tracking-tight text-white">
-            Sky<span className="text-accent">254</span>
+          <span className="mb-[18px] flex items-center gap-2.5 text-3xl font-bold tracking-tight text-white">
+            <LogoMark dark background="#0b1b33" className="h-12 w-auto flex-none" />
+            <span className="flex flex-col gap-1.5 leading-none">
+              <span>
+                Sky<span className="text-[#4d9cf0]">254</span>
+              </span>
+              <span className="pl-px text-[10px] font-bold tracking-[0.42em] text-on-ink">ELECTRONICS</span>
+            </span>
           </span>
           <span>{settings.address ? `${settings.address}, Nairobi, Kenya` : "Nairobi, Kenya"}</span>
           <span>Phone / WhatsApp: {site.phone}</span>

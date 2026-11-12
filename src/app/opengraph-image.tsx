@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { LogoMark } from "@/components/logo-mark";
 
 // The picture shown when a page without its own photo is shared on WhatsApp, Facebook or X.
 // Product pages use the product's photo instead.
@@ -22,8 +23,11 @@ export default function Image() {
           color: "#ffffff",
         }}
       >
-        <div style={{ display: "flex", fontSize: 150, fontWeight: 700, letterSpacing: -4 }}>
-          Sky<span style={{ color: "#ffb020" }}>254</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          <LogoMark dark detailed background="#0b1b33" height={170} />
+          <div style={{ display: "flex", fontSize: 150, fontWeight: 700, letterSpacing: -4 }}>
+            Sky<span style={{ color: "#4d9cf0" }}>254</span>
+          </div>
         </div>
         <div style={{ display: "flex", fontSize: 50, marginTop: 8, color: "#c9d4e5" }}>Electronics in Nairobi</div>
         <div style={{ display: "flex", gap: 20, marginTop: 64, fontSize: 32 }}>
