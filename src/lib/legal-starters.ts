@@ -105,4 +105,46 @@ After you order, we call you to confirm the details and the delivery time. You p
 ## When your order arrives
 
 Please check the product and its packaging before you accept it. If anything is damaged or missing, tell the delivery person and call us straight away.`,
+
+  cookies: `This policy explains what cookies are, which ones the Sky254 Electronics website uses, and how you can manage them.
+
+## What are cookies?
+
+Cookies are small text files a website stores on your device when you visit it. They help the site work properly, keep it secure, and show how it's used so we can improve it. Websites can also keep information in your browser's own storage, which works in a similar way.
+
+## How we use cookies
+
+We keep cookies to a minimum. You can shop, add to your cart and place an order without an account. Some cookies are set by us (first-party). Others are set by analytics and advertising services we may use (third-party), to understand how visitors use the site and to measure our adverts.
+
+## Necessary storage
+
+This is needed for the site to work, and doesn't track you.
+
+- **Cart and wishlist** (stored in your browser, not a cookie): remembers what you added until you remove it or clear your browser data. It stays on your device and isn't sent to us until you place an order.
+- **Dashboard sign-in** (sb-…-auth-token cookies): keeps shop staff signed in to the admin dashboard. Customers never get these.
+
+## Analytics and advertising cookies
+
+If we turn on these services, they set their own cookies:
+
+- **Google Analytics** (_ga, _ga_…, up to 2 years): counts visits and shows which pages and products are popular. The information is grouped and doesn't identify you by name.
+- **Google Ads** (_gcl_au, 3 months): tells us when someone who clicked one of our Google adverts goes on to buy.
+- **Meta Pixel** (_fbp, 3 months): tells us when someone who saw one of our Facebook or Instagram adverts goes on to buy, and helps show our adverts to people likely to be interested.
+
+These never load on your private order page.
+
+## Managing cookies
+
+You can block or delete cookies in your browser settings. Blocking necessary storage may stop the cart from working. Here's how in the main browsers:
+
+- [Chrome](https://support.google.com/accounts/answer/32050)
+- [Safari](https://support.apple.com/en-gb/guide/safari/sfri11471/mac)
+- [Firefox](https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox)
+- [Microsoft Edge](https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09)
+
+You can also opt out of Google Analytics with [Google's opt-out add-on](https://tools.google.com/dlpage/gaoptout), and choose which adverts you see in your [Google](https://adssettings.google.com) and [Facebook](https://www.facebook.com/adpreferences) ad settings.
+
+## More information
+
+Our [privacy policy](/privacy) explains how we handle your personal data. If you have questions about cookies, [contact us](/contact).`,
 };

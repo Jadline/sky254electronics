@@ -34,12 +34,17 @@ export const SITE_PAGES = {
     title: "Terms & conditions",
     description: "The terms that apply when you buy from Sky254 Electronics.",
   },
+  cookies: {
+    path: "/cookies",
+    title: "Cookie policy",
+    description: "What cookies and similar storage the Sky254 Electronics website uses, and how to manage them.",
+  },
 } as const;
 
 export type SitePageSlug = keyof typeof SITE_PAGES;
 
 /** The pages edited under Legal pages, in the order of the tabs there. */
-export const LEGAL_SLUGS = ["privacy", "terms", "returns", "delivery"] as const satisfies readonly SitePageSlug[];
+export const LEGAL_SLUGS = ["privacy", "terms", "returns", "delivery", "cookies"] as const satisfies readonly SitePageSlug[];
 
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 

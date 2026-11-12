@@ -15,6 +15,7 @@ const COLUMNS = [
       ["Delivery information", "/delivery"],
       ["Privacy policy", "/privacy"],
       ["Terms & conditions", "/terms"],
+      ["Cookie policy", "/cookies"],
     ],
   },
   {
