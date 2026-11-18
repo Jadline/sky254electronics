@@ -165,7 +165,7 @@ export function DeliveryManager({ options, points, freeOver }: { options: Option
                       <td className="px-3 py-3 text-right whitespace-nowrap">{usedText(o.used)}</td>
                       <td className="px-3 py-3 text-center">
                         <Switch on={o.own_rider} label={`${o.name}: our own rider`} onToggle={(on) => toggle.run("delivery_options", o.id, "own_rider", on)} />
-                        <span className="block text-xs text-adm-muted">{o.own_rider ? "Pay on delivery" : "M-Pesa first"}</span>
+                        <span className="block text-xs text-adm-muted">{o.own_rider ? "Pay on delivery or online" : "Paid online first"}</span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <Switch on={o.is_active} label={`${o.name}: shown at checkout`} onToggle={(on) => toggle.run("delivery_options", o.id, "is_active", on)} />
@@ -286,7 +286,7 @@ export function DeliveryManager({ options, points, freeOver }: { options: Option
             <input type="checkbox" name="own_rider" defaultChecked={option?.own_rider ?? true} className="mt-0.5 size-4 accent-adm-primary" />
             <span>
               <strong className="font-semibold">Our own rider delivers</strong>
-              <span className="block text-[13px] text-adm-muted">Pay on delivery. Untick for a courier: M-Pesa first.</span>
+              <span className="block text-[13px] text-adm-muted">Pay on delivery or online. Untick for a courier: paid online first.</span>
             </span>
           </label>
           {formError && <p className="text-[13px] text-[#b42318]">{formError}</p>}

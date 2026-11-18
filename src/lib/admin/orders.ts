@@ -28,7 +28,7 @@ export function nextStatus(status: OrderStatus, delivery: DeliveryMethod) {
 
 export type PaymentState = "paid" | "pending" | "failed" | "due" | "unpaid";
 
-/** Paid; an M-Pesa prompt in progress; failed; cash due on delivery; or not paid. */
+/** Paid; a payment in progress; the last online payment failed; cash due on delivery; or not paid. */
 export function paymentState(o: { payment_method: string; payment_status: string }): PaymentState {
   if (o.payment_status === "paid") return "paid";
   if (o.payment_status === "pending") return "pending";
@@ -44,7 +44,9 @@ export const PAYMENT_STATE: Record<PaymentState, { label: string; tone: Tone }> 
   unpaid: { label: "Not paid", tone: "red" },
 };
 
-export const PAYMENT_METHOD: Record<PaymentMethod, string> = { mpesa: "M-Pesa", cash: "Cash on delivery" };
+/** How the order may be paid: couriers are paid online first, other orders online or in cash. */
+export const PAYMENT_METHOD: Record<PaymentMethod, string> = { mpesa: "Online before sending", cash: "Online or cash on delivery" };
+export const PAYMENT_METHOD_SHORT: Record<PaymentMethod, string> = { mpesa: "Online first", cash: "Cash or online" };
 
 export const DELIVERY: Record<DeliveryMethod, { label: string; short: string; color: string }> = {
   nairobi: { label: "Delivery by our rider", short: "Own rider", color: "#0669d6" },

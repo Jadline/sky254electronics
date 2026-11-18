@@ -4,18 +4,22 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LiveUpdates } from "@/components/live-updates";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
+import { PayButton } from "@/components/shop/pay-button";
 import { site, whatsappLink } from "@/config/site";
 import { getShopSettings } from "@/lib/catalog";
 import {
   DELIVERY_METHODS,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
+  ONLINE_PAY_WAYS,
   formatDate,
   formatPhone,
+  payOnlineBlocker,
   type DeliveryMethod,
   type OrderStatus,
   type PaymentStatus,
 } from "@/lib/order-labels";
+import { pesapalReady } from "@/lib/pesapal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatKes } from "@/lib/types";
 
@@ -49,6 +53,18 @@ async function OrderDetails({ params }: { params: Params }) {
   const method = order.delivery_method as DeliveryMethod;
   const reached = PROGRESS.indexOf(status);
   const whatsapp = whatsappLink(`Hi Sky254, I'm asking about my order ${order.order_number}.`);
+  // Online payment opens once the shop has confirmed the order and its total.
+  const online = pesapalReady();
+  const payBlocker = online ? payOnlineBlocker(order) : null;
+  const canPay = online && !payBlocker;
+  const cashWhen = method === "pickup" ? "when you collect" : "on delivery";
+  const paymentNote = !online
+    ? order.payment_method === "mpesa"
+      ? "Pay by M-Pesa before we send it. We'll explain when we call."
+      : "Pay by M-Pesa or cash. We'll explain when we call."
+    : canPay
+      ? `Pay ${formatKes(order.total_kes)} by ${ONLINE_PAY_WAYS} through Pesapal.${order.payment_method === "cash" ? ` Or pay cash ${cashWhen}.` : ""}`
+      : `${order.payment_method === "mpesa" ? `You pay by ${ONLINE_PAY_WAYS} before we send it.` : `Pay by ${ONLINE_PAY_WAYS}, or in cash ${cashWhen}.`} ${payBlocker}`;
   const items = order.order_items as { product_name: string; price_kes: number; qty: number; line_total_kes: number }[];
 
   return (
@@ -130,10 +146,12 @@ async function OrderDetails({ params }: { params: Params }) {
           <div>
             <h2 className="mb-1.5 text-[15px] font-medium uppercase">Payment</h2>
             <p>{PAYMENT_STATUSES[order.payment_status as PaymentStatus]}</p>
-            {order.payment_status === "unpaid" && (
-              <p className="text-body">
-                {order.payment_method === "mpesa" ? "Pay by M-Pesa before we send it. We'll explain when we call." : "Pay by M-Pesa or cash. We'll explain when we call."}
-              </p>
+            {order.payment_status !== "paid" && status !== "cancelled" && (
+              <>
+                {order.payment_status === "failed" && <p className="text-body">Your last payment didn&apos;t go through. You can try again.</p>}
+                <p className="text-body">{paymentNote}</p>
+                {canPay && <PayButton token={token} label={`Pay ${formatKes(order.total_kes)}`} />}
+              </>
             )}
           </div>
           <div>

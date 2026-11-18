@@ -118,8 +118,8 @@ export async function loadDashboard(supabase: SupabaseClient, range: RangeKey) {
 
   // How customers pay, in the range. Every order lands in exactly one row.
   const methods = [
-    { key: "mpesa", name: "M-Pesa", note: "STK prompt on the customer's phone", color: "#2e9e4f" },
-    { key: "cash", name: "Cash on delivery", note: "Paid to the rider, or at the shop", color: "#f0643c" },
+    { key: "mpesa", name: "Online first", note: "Courier orders, paid through Pesapal before sending", color: "#2e9e4f" },
+    { key: "cash", name: "Cash or online", note: "Own rider or pickup: cash, or Pesapal", color: "#f0643c" },
   ].map((m) => ({ ...m, count: inRange.filter((o) => o.payment_method === m.key).length }));
   const paidCount = inRange.filter((o) => o.payment_status === "paid").length;
 

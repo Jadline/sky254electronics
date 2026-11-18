@@ -9,13 +9,15 @@ import { prettyPhone } from "@/lib/admin/orders";
 
 export type PaymentRow = {
   id: string;
-  kind: "mpesa" | "cash";
+  kind: "online" | "cash";
+  /** How it was paid online, e.g. "MPESA 2547****678". */
+  via: string;
   orderId: string | null;
   orderNumber: string;
   customer: string;
   phone: string;
   amount: number;
-  state: "paid" | "pending" | "failed" | "due";
+  state: "paid" | "pending" | "failed" | "reversed" | "due";
   reference: string;
   note: string;
   cancelledOrder: boolean;
@@ -28,6 +30,7 @@ const STATE: Record<PaymentRow["state"], { label: string; tone: Tone }> = {
   paid: { label: "Paid", tone: "green" },
   pending: { label: "In progress", tone: "amber" },
   failed: { label: "Failed", tone: "red" },
+  reversed: { label: "Reversed", tone: "gray" },
   due: { label: "Cash to collect", tone: "indigo" },
 };
 
@@ -35,14 +38,14 @@ type TileKey = "all" | PaymentRow["state"];
 const TILES: { key: TileKey; label: string; icon: typeof CheckIcon | null; bg: string; ink: string; ring: string }[] = [
   { key: "all", label: "Received", icon: null, bg: "bg-adm-tint", ink: "text-adm-primary", ring: "border-adm-primary" },
   { key: "paid", label: "Paid", icon: CheckIcon, bg: "bg-[#e7f6ec]", ink: "text-[#116632]", ring: "border-[#116632]" },
-  { key: "pending", label: "M-Pesa in progress", icon: ClockIcon, bg: "bg-[#fef7e6]", ink: "text-[#92400e]", ring: "border-[#d97706]" },
-  { key: "failed", label: "M-Pesa failed", icon: XCircleIcon, bg: "bg-[#fdecec]", ink: "text-[#b42318]", ring: "border-[#b42318]" },
+  { key: "pending", label: "Online, not finished", icon: ClockIcon, bg: "bg-[#fef7e6]", ink: "text-[#92400e]", ring: "border-[#d97706]" },
+  { key: "failed", label: "Online failed", icon: XCircleIcon, bg: "bg-[#fdecec]", ink: "text-[#b42318]", ring: "border-[#b42318]" },
   { key: "due", label: "Cash to collect", icon: BanknotesIcon, bg: "bg-adm-lavender", ink: "text-adm-lavender-ink", ring: "border-adm-lavender-ink" },
 ];
 
 export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow[]; initialStatus: string }) {
   const [tile, setTile] = useState<TileKey>(TILES.some((t) => t.key === initialStatus) ? (initialStatus as TileKey) : "all");
-  const [kind, setKind] = useState<"all" | "mpesa" | "cash">("all");
+  const [kind, setKind] = useState<"all" | "online" | "cash">("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
 
@@ -58,6 +61,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
           p.customer.toLowerCase().includes(t) ||
           p.orderNumber.toLowerCase().includes(t) ||
           p.reference.toLowerCase().includes(t) ||
+          p.via.toLowerCase().includes(t) ||
           (tDigits.length >= 3 && p.phone.includes(tDigits))),
     );
   }, [payments, tile, kind, q]);
@@ -102,7 +106,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
           {(
             [
               ["all", "All"],
-              ["mpesa", "M-Pesa"],
+              ["online", "Online"],
               ["cash", "Cash"],
             ] as const
           ).map(([k, label]) => (
@@ -133,7 +137,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
               setQ(e.target.value);
               setPage(1);
             }}
-            placeholder="Search name, phone, order or M-Pesa receipt"
+            placeholder="Search name, phone, order or payment reference"
             className="min-w-0 flex-1 bg-transparent text-sm outline-0 placeholder:text-adm-faint"
           />
         </div>
@@ -146,7 +150,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
               <th scope="col" className="py-3 pr-3 pl-[22px] font-semibold">
                 When
               </th>
-              {["Order", "Customer", "Method", "Status", "Receipt"].map((h) => (
+              {["Order", "Customer", "Method", "Status", "Reference"].map((h) => (
                 <th key={h} scope="col" className="px-3 py-3 font-semibold">
                   {h}
                 </th>
@@ -183,7 +187,16 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
                       <span className="text-[13px] text-adm-muted">{prettyPhone(p.phone)}</span>
                     </span>
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap">{p.kind === "mpesa" ? "M-Pesa" : "Cash"}</td>
+                  <td className="px-3 py-3 whitespace-nowrap">
+                    {p.kind === "cash" ? (
+                      "Cash"
+                    ) : (
+                      <span className="flex flex-col leading-snug">
+                        <span>Pesapal</span>
+                        {p.via && <span className="text-[13px] text-adm-muted">{p.via}</span>}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-3">
                     <span className="flex flex-col items-start gap-0.5 leading-snug">
                       <Badge tone={st.tone} dot>
@@ -202,7 +215,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
       </div>
       {shown.length === 0 && (
         <p className="px-[18px] py-10 text-center text-adm-muted">
-          {payments.length ? "No payments match. Try another tile or search." : "No payments yet. M-Pesa payments appear here as soon as a customer pays."}
+          {payments.length ? "No payments match. Try another tile or search." : "No payments yet. Online payments appear here as soon as a customer pays."}
         </p>
       )}
       <Pager page={current} pages={pages} onPage={setPage}>

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Badge, formatDate, initials, ksh, Loading, plural, TINTS } from "@/components/admin/ui";
 import { adminName, requireAdmin } from "@/lib/admin-auth";
 import { loadDashboard, RANGES, STALE_DAYS, type RangeKey } from "@/lib/admin/dashboard";
-import { ORDER_STATUS, PAYMENT_STATE, paymentState } from "@/lib/admin/orders";
+import { ORDER_STATUS, PAYMENT_METHOD_SHORT, PAYMENT_STATE, paymentState } from "@/lib/admin/orders";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -101,8 +101,8 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
     },
     todos.failedPayments > 0 && {
       count: todos.failedPayments,
-      title: "Failed M-Pesa payments",
-      text: "The prompt was cancelled or timed out. Follow up with the customer",
+      title: "Failed payments",
+      text: "The customer's last online payment didn't go through. Follow up with them",
       href: "/admin/payments?status=failed",
       tint: "bg-[#fdecec]",
       ink: "text-[#b42318]",
@@ -484,7 +484,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
                         <td className="px-2.5 py-3 whitespace-nowrap text-adm-body">{formatDate(o.created_at)}</td>
                         <td className="px-2.5 py-3">
                           <Badge tone={pay.tone}>
-                            {o.payment_method === "mpesa" ? "M-Pesa" : "Cash"} · {pay.label}
+                            {PAYMENT_METHOD_SHORT[o.payment_method]} · {pay.label}
                           </Badge>
                         </td>
                         <td className="px-2.5 py-3">

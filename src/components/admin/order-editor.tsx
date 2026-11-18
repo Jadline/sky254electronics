@@ -24,7 +24,7 @@ export function OrderEditor({
   deliveryFee: number | null;
   subtotal: number;
   isCash: boolean;
-  /** Cash, or M-Pesa paid straight to the shop (no Safaricom payment on record). */
+  /** False once Pesapal has a payment on the order: then Pesapal decides whether it's paid. */
   canMarkPaid: boolean;
   isPaid: boolean;
   paymentLabel: string;
@@ -66,10 +66,10 @@ export function OrderEditor({
         {canMarkPaid ? (
           <label className="mt-1 flex cursor-pointer items-center gap-2.5">
             <input type="checkbox" name="paid" defaultChecked={isPaid} className="size-4 accent-adm-primary" />
-            {isCash ? "Cash received" : "M-Pesa received"}
+            {isCash ? "Paid (cash, or M-Pesa to the shop)" : "Paid (M-Pesa straight to the shop)"}
           </label>
         ) : (
-          <span className="text-[13px] text-adm-muted">M-Pesa payments are confirmed by Safaricom automatically.</span>
+          <span className="text-[13px] text-adm-muted">Paid through Pesapal. This updates on its own when Pesapal confirms a payment.</span>
         )}
       </div>
       <FormMessage state={state} />

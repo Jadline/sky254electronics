@@ -388,7 +388,11 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
 
           <div className="bg-tint p-4 text-[13px] leading-relaxed">
             <strong className="font-medium">Payment:</strong> nothing to pay now. We&apos;ll call to confirm your order, then{" "}
-            {courier ? "you pay by M-Pesa before we send it." : choice?.kind === "pickup" ? "you pay by M-Pesa or cash when you collect." : "you pay by M-Pesa or cash on delivery."}
+            {courier
+              ? "you pay online by M-Pesa, Airtel Money or card before we send it."
+              : choice?.kind === "pickup"
+                ? "you pay online by M-Pesa, Airtel Money or card, or in cash when you collect."
+                : "you pay online by M-Pesa, Airtel Money or card, or in cash on delivery."}
           </div>
 
           {error && !INLINE_FIELDS.includes(error.field ?? "") && (

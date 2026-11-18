@@ -5,7 +5,7 @@ import { LiveRefresh } from "@/components/admin/live-refresh";
 import { initials } from "@/components/admin/ui";
 import { adminName, getAdmin } from "@/lib/admin-auth";
 
-/** Sidebar counts: new orders waiting to be confirmed, failed M-Pesa payments on live orders, unread enquiries, and reviews waiting for approval. */
+/** Sidebar counts: new orders waiting to be confirmed, failed online payments on live orders, unread enquiries, and reviews waiting for approval. */
 const loadBadges = cache(async () => {
   const admin = await getAdmin();
   if (!admin) return { orders: 0, payments: 0, enquiries: 0, reviews: 0 };

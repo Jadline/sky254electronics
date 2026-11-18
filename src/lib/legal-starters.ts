@@ -13,7 +13,7 @@ export const LEGAL_STARTERS: Record<LegalSlug, string> = {
 ## What we collect
 
 - When you order: your name, phone number, email address (if you give one) and delivery address.
-- When you pay by M-Pesa: the payment details Safaricom sends us, such as the transaction code and phone number.
+- When you pay online: the payment details Pesapal sends us, such as the payment method, transaction code and a masked phone or card number. We never see your card details or PIN.
 - When you sign up for stock alerts: your email address.
 - When you browse: your cart and wishlist are stored on your own device, not by us. If we use analytics or advertising tools, they collect information about your visit, such as pages viewed and your device type.
 
@@ -28,7 +28,7 @@ We don't sell your personal data.
 
 ## Who we share it with
 
-Only the services we need to run the shop: delivery couriers, Safaricom for M-Pesa payments, and the companies that host our website and send our messages. They may only use your data to provide that service.
+Only the services we need to run the shop: delivery couriers, Pesapal for online payments, and the companies that host our website and send our messages. They may only use your data to provide that service.
 
 ## How long we keep it
 
@@ -50,7 +50,7 @@ Prices are in Kenya shillings. Delivery fees are shown at checkout, or confirmed
 
 ## Payment
 
-You can pay by M-Pesa or in cash on delivery or pickup. The product remains ours until it's paid for in full.
+You can pay online by M-Pesa, Airtel Money or card through Pesapal, or in cash on delivery or pickup. The product remains ours until it's paid for in full.
 
 ## Delivery
 
@@ -94,7 +94,7 @@ Call or WhatsApp us with your order number and a short description of the proble
 
   delivery: `## How it works
 
-After you order, we call you to confirm the details and the delivery time. You pay by M-Pesa, or in cash when your order arrives.
+After you order, we call you to confirm the details and the delivery time. Once confirmed, you can pay online by M-Pesa, Airtel Money or card, or in cash when your order arrives.
 
 ## Delivery times
 

@@ -11,6 +11,8 @@ import { BADGES, MAX_BANNERS, MAX_SLIDER, SHORT_NAME_MAX } from "@/lib/home-rule
 import { isSoldStatus } from "@/lib/inventory";
 import { salePrice } from "@/lib/pricing";
 import { sendCustomerUpdate } from "@/lib/notify";
+import { payOnlineBlocker } from "@/lib/order-labels";
+import { pesapalReady } from "@/lib/pesapal";
 import { MAX_PHOTOS, PRODUCTS_BUCKET, type UploadedImage } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -486,24 +488,28 @@ function afterStatusChange(id: string, before: string, status: string) {
   if (isSoldStatus(before) !== isSoldStatus(status)) refreshCatalog();
   else revalidatePath("/admin", "layout");
   announce(orderTopic(id));
-  // Email the customer when it's sent out, after the response so saving never waits on it.
-  // Other steps show on their order page and at /track-order.
-  if (before !== status && status === "out_for_delivery") {
+  // Email the customer when it's confirmed (with how to pay) and when it's sent out, after the
+  // response so saving never waits on it. Other steps show on their order page and at /track-order.
+  if (before !== status && (status === "confirmed" || status === "out_for_delivery")) {
     after(async () => {
       const { data: order } = await createAdminClient()
         .from("orders")
-        .select("order_number, customer_name, customer_email, total_kes, delivery_fee_kes, access_token")
+        .select("order_number, status, customer_name, customer_email, total_kes, delivery_method, delivery_fee_kes, payment_method, payment_status, access_token")
         .eq("id", id)
         .maybeSingle();
       if (!order?.customer_email) return;
+      // A paid order needs no payment email when it's confirmed.
+      if (status === "confirmed" && order.payment_status === "paid") return;
       await sendCustomerUpdate({
-        event: "out_for_delivery",
+        event: status,
         orderNumber: order.order_number,
         customerName: order.customer_name,
         customerEmail: order.customer_email,
         totalKes: order.total_kes,
         deliveryConfirmed: order.delivery_fee_kes != null,
         token: order.access_token,
+        payOnline: pesapalReady() && !payOnlineBlocker(order),
+        cashWhen: order.payment_method === "cash" ? (order.delivery_method === "pickup" ? "when you collect" : "on delivery") : null,
       });
     });
   }
@@ -528,14 +534,16 @@ export async function updateOrder(_: FormState, form: FormData): Promise<FormSta
     // Keep any coupon discount when the fee changes.
     total_kes: order.subtotal_kes - (order.discount_kes ?? 0) + (fee ?? 0),
   };
-  // Cash is always marked by hand. So is M-Pesa paid straight to the shop, unless
-  // Safaricom has already sent a payment for this order, which then decides it.
-  let byHand = order.payment_method === "cash";
-  if (!byHand) {
-    const { count } = await supabase.from("mpesa_payments").select("id", { count: "exact", head: true }).eq("order_id", id);
-    byHand = (count ?? 0) === 0;
-  }
-  if (byHand) changes.payment_status = checked(form, "paid") ? "paid" : "unpaid";
+  // Cash, or M-Pesa sent straight to the shop, is marked by hand. Once Pesapal has taken a
+  // payment on the order, that decides it instead, against the (possibly new) total.
+  const { data: online } = await supabase.from("pesapal_payments").select("status, paid_kes").eq("order_id", id);
+  const settled = (online ?? []).filter((p) => p.status === "paid" || p.status === "reversed");
+  if (settled.length) {
+    const paidKes = settled.reduce((sum, p) => sum + (p.status === "paid" ? (p.paid_kes ?? 0) : 0), 0);
+    changes.payment_status = paidKes >= (changes.total_kes as number) ? "paid" : "unpaid";
+  } else if (checked(form, "paid")) changes.payment_status = "paid";
+  // Unticking clears "paid", but keeps a failed online attempt visible.
+  else if (order.payment_status === "paid") changes.payment_status = "unpaid";
 
   const { error } = await supabase.from("orders").update(changes).eq("id", id);
   if (error) return { error: stockProblem(error) ?? "Couldn't save the order. Please try again." };

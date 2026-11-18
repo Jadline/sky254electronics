@@ -5,11 +5,14 @@ const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
 /**
  * Sent with every page. The Content-Security-Policy only covers what can't break the
  * site: no framing by other sites (clickjacking), no <base> or <object> tricks, and
- * forms may only submit here. A full script policy would need a nonce on every
+ * forms may only submit here (or go on to Pesapal to pay). A full script policy would need a nonce on every
  * request, which would stop pages from being cached.
  */
+// The Pay button's form ends in a redirect to Pesapal's payment page, which form-action also covers.
+const PESAPAL = "https://cybqa.pesapal.com https://pay.pesapal.com";
+
 const SECURITY_HEADERS = [
-  { key: "Content-Security-Policy", value: "frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+  { key: "Content-Security-Policy", value: `frame-ancestors 'self'; base-uri 'self'; form-action 'self' ${PESAPAL}; object-src 'none'` },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

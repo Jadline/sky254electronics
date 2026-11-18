@@ -39,7 +39,7 @@ export function storeJsonLd(settings: ShopSettings) {
     // Free text from Shop settings, e.g. "Mon–Sat, 8am – 7pm". Google reads it as a hint.
     ...(settings.hours && { openingHours: settings.hours }),
     currenciesAccepted: "KES",
-    paymentAccepted: "M-Pesa, Cash",
+    paymentAccepted: "M-Pesa, Airtel Money, Credit Card, Cash",
     areaServed: { "@type": "Country", name: "Kenya" },
     ...(sameAs.length && { sameAs }),
   };

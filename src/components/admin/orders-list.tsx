@@ -13,6 +13,7 @@ import {
   DELIVERY,
   nextStatus,
   ORDER_STATUS,
+  PAYMENT_METHOD_SHORT,
   PAYMENT_STATE,
   prettyPhone,
   type DeliveryMethod,
@@ -200,7 +201,7 @@ export function OrdersList({ orders, initialStatus, initialQuery }: { orders: Or
                         <Badge tone={pay.tone} dot>
                           {pay.label}
                         </Badge>
-                        <span className="text-[13px] text-adm-muted">{o.method === "mpesa" ? "M-Pesa" : "Cash"}</span>
+                        <span className="text-[13px] text-adm-muted">{PAYMENT_METHOD_SHORT[o.method]}</span>
                       </span>
                     </td>
                     <td className="px-3 py-3">

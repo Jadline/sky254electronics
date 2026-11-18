@@ -26,7 +26,18 @@ type Params = Promise<{ id: string }>;
 const card = "rounded-[20px] border border-adm-line bg-white";
 
 type Item = { id: string; product_id: string | null; product_name: string; price_kes: number; qty: number; line_total_kes: number };
-type Payment = { id: string; phone: string; amount_kes: number; status: string; receipt_number: string | null; result_desc: string | null; created_at: string };
+type Payment = {
+  id: string;
+  amount_kes: number;
+  paid_kes: number | null;
+  status: "pending" | "paid" | "failed" | "reversed";
+  status_description: string | null;
+  pay_method: string | null;
+  pay_account: string | null;
+  confirmation_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 async function OrderDetail({ params }: { params: Params }) {
   const { id } = await params;
@@ -35,7 +46,7 @@ async function OrderDetail({ params }: { params: Params }) {
 
   const { data: order } = await supabase
     .from("orders")
-    .select("*, order_items(id, product_id, product_name, price_kes, qty, line_total_kes), mpesa_payments(id, phone, amount_kes, status, receipt_number, result_desc, created_at)")
+    .select("*, order_items(id, product_id, product_name, price_kes, qty, line_total_kes), pesapal_payments(id, amount_kes, paid_kes, status, status_description, pay_method, pay_account, confirmation_code, created_at, updated_at)")
     .eq("id", id)
     .maybeSingle();
   if (!order) notFound();
@@ -46,7 +57,7 @@ async function OrderDetail({ params }: { params: Params }) {
     .eq("customer_phone", order.customer_phone);
 
   const items = order.order_items as Item[];
-  const payments = [...(order.mpesa_payments as Payment[])].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const payments = [...(order.pesapal_payments as Payment[])].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const status = order.status as OrderStatus;
   const method = order.delivery_method as DeliveryMethod;
   const payMethod = order.payment_method as PaymentMethod;
@@ -63,17 +74,25 @@ async function OrderDetail({ params }: { params: Params }) {
       text: `On the website · ${order.delivery_option_name ?? DELIVERY[method].label} · ${PAYMENT_METHOD[payMethod]}`,
       when: order.created_at,
     },
-    ...payments.map((p) => ({
-      title: p.status === "paid" ? "M-Pesa payment received" : p.status === "failed" ? "M-Pesa payment failed" : "M-Pesa prompt sent",
-      text:
-        p.status === "paid"
-          ? `${ksh(p.amount_kes)} from ${prettyPhone(p.phone)}${p.receipt_number ? ` · receipt ${p.receipt_number}` : ""}`
-          : p.status === "failed"
-            ? `${p.result_desc || "Cancelled or timed out"} · ${prettyPhone(p.phone)}`
-            : `${ksh(p.amount_kes)} to ${prettyPhone(p.phone)}, waiting for the customer`,
-      when: p.created_at,
-      tone: p.status === "failed" ? ("failed" as const) : ("done" as const),
-    })),
+    ...payments.map((p) => {
+      const via = [p.pay_method, p.pay_account].filter(Boolean).join(" ");
+      return {
+        title: {
+          paid: "Paid online",
+          failed: "Online payment failed",
+          reversed: "Online payment reversed",
+          pending: "Opened the Pesapal payment page",
+        }[p.status],
+        text:
+          p.status === "paid"
+            ? `${ksh(p.paid_kes ?? p.amount_kes)}${via ? ` by ${via}` : ""}${p.confirmation_code ? ` · ref ${p.confirmation_code}` : ""}`
+            : p.status === "pending"
+              ? `${ksh(p.amount_kes)}, not paid yet`
+              : `${ksh(p.amount_kes)}${via ? ` by ${via}` : ""} · ${p.status_description || (p.status === "reversed" ? "Refunded or charged back" : "Cancelled or declined")}`,
+        when: p.status === "pending" ? p.created_at : p.updated_at,
+        tone: p.status === "failed" || p.status === "reversed" ? ("failed" as const) : ("done" as const),
+      };
+    }),
   ];
   if (payMethod === "cash" && order.payment_status === "paid") activity.push({ title: "Cash received", text: `${ksh(order.total_kes)} marked as paid` });
   if (status !== "pending") {
@@ -228,7 +247,7 @@ async function OrderDetail({ params }: { params: Params }) {
             deliveryFee={order.delivery_fee_kes}
             subtotal={order.subtotal_kes - (order.discount_kes ?? 0)}
             isCash={payMethod === "cash"}
-            canMarkPaid={payMethod === "cash" || payments.length === 0}
+            canMarkPaid={!payments.some((p) => p.status === "paid" || p.status === "reversed")}
             isPaid={order.payment_status === "paid"}
             paymentLabel={`${PAYMENT_METHOD[payMethod]} · ${pay.label}`}
           />

@@ -28,11 +28,33 @@ export const PAYMENT_STATUSES = {
 } as const;
 export type PaymentStatus = keyof typeof PAYMENT_STATUSES;
 
+/**
+ * How an order may be paid. "mpesa" is the stored value for "online before we send it"
+ * (couriers); it predates Pesapal, which takes M-Pesa, Airtel Money and cards.
+ */
 export const PAYMENT_METHODS = {
   cash: "Pay on delivery or collection",
-  mpesa: "M-Pesa",
+  mpesa: "Pay online before we send it",
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
+
+/** How customers can pay online, in the words they'll recognise. */
+export const ONLINE_PAY_WAYS = "M-Pesa, Airtel Money or card";
+
+/**
+ * Why an order can't be paid online yet, or null when it can. The shop confirms every
+ * order (and its delivery fee) by phone first, so the customer only pays a final total.
+ */
+export function payOnlineBlocker(o: { status: string; payment_status: string; delivery_method: string; delivery_fee_kes: number | null }) {
+  if (o.payment_status === "paid") return "This order is already paid.";
+  if (o.status === "cancelled") return "This order was cancelled.";
+  if (o.status === "completed") return "This order is already completed. Please call us about payment.";
+  if (o.status === "pending") return "We'll call you to confirm your order first. You can pay here once it's confirmed.";
+  if (o.delivery_method !== "pickup" && o.delivery_fee_kes == null) {
+    return "We're still working out your delivery fee. You can pay here once it's set.";
+  }
+  return null;
+}
 
 /** Kenyan mobile numbers, stored as 2547XXXXXXXX or 2541XXXXXXXX. */
 export function normalisePhone(raw: string) {

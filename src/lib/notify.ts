@@ -1,6 +1,6 @@
 import "server-only";
 import { site } from "@/config/site";
-import { formatPhone } from "@/lib/order-labels";
+import { formatPhone, ONLINE_PAY_WAYS } from "@/lib/order-labels";
 import { formatKes } from "@/lib/types";
 
 // Every message here is best effort and never throws: the order is already saved and
@@ -115,10 +115,10 @@ export async function sendEnquiryAlert(enquiry: {
 // ---------- To the customer ----------
 
 /**
- * The two moments a customer is emailed: when the order arrives, and when it's on its way.
- * Everything else they can follow on their order page or at /track-order.
+ * The moments a customer is emailed: when the order arrives, when the shop confirms it (with
+ * how to pay), and when it's on its way. The rest shows on their order page and at /track-order.
  */
-export type CustomerEmailEvent = "pending" | "out_for_delivery";
+export type CustomerEmailEvent = "pending" | "confirmed" | "out_for_delivery";
 
 export type CustomerUpdate = {
   /** "pending" is a newly placed order. */
@@ -131,6 +131,9 @@ export type CustomerUpdate = {
   deliveryConfirmed: boolean;
   /** The private link to the customer's order page. */
   token: string;
+  /** For "confirmed": whether they can pay online now, and whether cash is an option. */
+  payOnline?: boolean;
+  cashWhen?: string | null;
 };
 
 /** Emails the customer about their order, when they gave an email address at checkout. */
@@ -142,6 +145,12 @@ export async function sendCustomerUpdate(u: CustomerUpdate) {
   const link = siteUrl() ? `${siteUrl()}/order/${u.token}` : null;
   const track = siteUrl() ? `${siteUrl()}/track-order` : null;
 
+  const pay = u.payOnline
+    ? `You can pay ${formatKes(u.totalKes)} now by ${ONLINE_PAY_WAYS} from your order page${u.cashWhen ? `, or pay cash ${u.cashWhen}` : ", and we'll send it as soon as it's paid"}.`
+    : u.cashWhen
+      ? `You can pay cash ${u.cashWhen}.`
+      : "We'll be in touch about payment.";
+
   const { subject, lines } =
     u.event === "pending"
       ? {
@@ -152,14 +161,19 @@ export async function sendCustomerUpdate(u: CustomerUpdate) {
             "We'll call you shortly to confirm it and arrange delivery or collection.",
           ],
         }
-      : {
-          subject: `Your order ${u.orderNumber} is on its way`,
-          lines: [`Hi ${first},`, `Good news: your order <strong>${number}</strong> is on its way to you.`],
-        };
+      : u.event === "confirmed"
+        ? {
+            subject: u.payOnline ? `Your order ${u.orderNumber} is confirmed: pay online` : `Your order ${u.orderNumber} is confirmed`,
+            lines: [`Hi ${first},`, `We've confirmed your order <strong>${number}</strong> (${total}).`, escapeHtml(pay)],
+          }
+        : {
+            subject: `Your order ${u.orderNumber} is on its way`,
+            lines: [`Hi ${first},`, `Good news: your order <strong>${number}</strong> is on its way to you.`],
+          };
 
   const html = `
     ${lines.map((line) => `<p>${line}</p>`).join("")}
-    ${link ? `<p><a href="${escapeHtml(link)}">View your order</a></p>` : ""}
+    ${link ? `<p><a href="${escapeHtml(link)}">${u.event === "confirmed" && u.payOnline ? "Pay and view your order" : "View your order"}</a></p>` : ""}
     ${track ? `<p>You can check its progress any time at <a href="${escapeHtml(track)}">${escapeHtml(track)}</a> with your order number and phone.</p>` : ""}
     <p>Questions? Call or WhatsApp us on ${escapeHtml(site.phone)}.</p>
     <p>${escapeHtml(site.name)}</p>`;

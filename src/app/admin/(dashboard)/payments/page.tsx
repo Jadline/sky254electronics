@@ -8,26 +8,31 @@ export const metadata: Metadata = { title: "Payments" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-type Mpesa = {
+type Online = {
   id: string;
-  phone: string;
   amount_kes: number;
-  status: "pending" | "paid" | "failed";
-  receipt_number: string | null;
-  result_desc: string | null;
+  paid_kes: number | null;
+  status: "pending" | "paid" | "failed" | "reversed";
+  status_description: string | null;
+  pay_method: string | null;
+  pay_account: string | null;
+  confirmation_code: string | null;
   created_at: string;
-  orders: { id: string; order_number: string; customer_name: string; status: string } | null;
+  updated_at: string;
+  orders: { id: string; order_number: string; customer_name: string; customer_phone: string; status: string } | null;
 };
 type CashOrder = { id: string; order_number: string; customer_name: string; customer_phone: string; total_kes: number; payment_status: string; created_at: string; updated_at: string };
 
-/** M-Pesa attempts from Safaricom, plus cash orders: everything the shop has been, or is still to be, paid. */
+/** Pesapal payments (M-Pesa, Airtel Money, cards), plus cash orders: everything the shop has been, or is still to be, paid. */
 async function Payments({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const { supabase } = await requireAdmin();
-  const [mpesa, cash] = await Promise.all([
+  const [online, cash] = await Promise.all([
     supabase
-      .from("mpesa_payments")
-      .select("id, phone, amount_kes, status, receipt_number, result_desc, created_at, orders(id, order_number, customer_name, status)")
+      .from("pesapal_payments")
+      .select(
+        "id, amount_kes, paid_kes, status, status_description, pay_method, pay_account, confirmation_code, created_at, updated_at, orders(id, order_number, customer_name, customer_phone, status)",
+      )
       .order("created_at", { ascending: false })
       .limit(2000),
     supabase
@@ -38,27 +43,36 @@ async function Payments({ searchParams }: { searchParams: SearchParams }) {
       .order("created_at", { ascending: false })
       .limit(2000),
   ]);
-  if (mpesa.error) throw new Error(`Couldn't load payments: ${mpesa.error.message}`);
+  if (online.error) throw new Error(`Couldn't load payments: ${online.error.message}`);
   if (cash.error) throw new Error(`Couldn't load cash orders: ${cash.error.message}`);
 
   const rows: PaymentRow[] = [
-    ...(mpesa.data as unknown as Mpesa[]).map((p) => ({
+    ...(online.data as unknown as Online[]).map((p) => ({
       id: p.id,
-      kind: "mpesa" as const,
+      kind: "online" as const,
+      via: [p.pay_method, p.pay_account].filter(Boolean).join(" "),
       orderId: p.orders?.id ?? null,
       orderNumber: p.orders?.order_number ?? "—",
       customer: p.orders?.customer_name ?? "—",
-      phone: p.phone,
-      amount: p.amount_kes,
+      phone: p.orders?.customer_phone ?? "",
+      amount: p.status === "paid" ? (p.paid_kes ?? p.amount_kes) : p.amount_kes,
       state: p.status,
-      reference: p.receipt_number ?? "",
-      note: p.status === "failed" ? p.result_desc || "Cancelled or timed out" : p.status === "pending" ? "Waiting for the customer to enter their PIN" : "",
+      reference: p.confirmation_code ?? "",
+      note:
+        p.status === "failed"
+          ? p.status_description || "Cancelled or declined"
+          : p.status === "reversed"
+            ? p.status_description || "Refunded or charged back"
+            : p.status === "pending"
+              ? "Opened the payment page, not paid yet"
+              : "",
       cancelledOrder: p.orders?.status === "cancelled",
-      when: p.created_at,
+      when: p.status === "pending" ? p.created_at : p.updated_at,
     })),
     ...(cash.data as CashOrder[]).map((o) => ({
       id: `cash-${o.id}`,
       kind: "cash" as const,
+      via: "",
       orderId: o.id,
       orderNumber: o.order_number,
       customer: o.customer_name,
@@ -79,7 +93,7 @@ async function Payments({ searchParams }: { searchParams: SearchParams }) {
 export default function PaymentsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <>
-      <PageHeader title="Payments" description="M-Pesa payments confirmed by Safaricom, and cash still to collect." />
+      <PageHeader title="Payments" description="Online payments through Pesapal (M-Pesa, Airtel Money, cards), and cash still to collect." />
       <Suspense fallback={<Loading label="Loading payments…" />}>
         <Payments searchParams={searchParams} />
       </Suspense>

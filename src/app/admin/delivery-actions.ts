@@ -77,7 +77,7 @@ export async function setDeliverySwitch(table: string, id: string, field: string
   const { error } = await supabase.from(table).update({ [field]: on }).eq("id", id);
   if (error) return { error: "Couldn't save." };
   refresh();
-  return { message: field === "is_active" ? (on ? "Shown at checkout" : "Hidden from checkout") : on ? "Own rider: pay on delivery" : "Courier: M-Pesa first" };
+  return { message: field === "is_active" ? (on ? "Shown at checkout" : "Hidden from checkout") : on ? "Own rider: pay on delivery" : "Courier: paid online first" };
 }
 
 /** Orders keep the name they were placed with, so deleting doesn't change them. */
