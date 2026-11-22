@@ -483,7 +483,7 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
                         <td className="px-2.5 py-3 whitespace-nowrap text-adm-body">{formatDate(o.created_at)}</td>
                         <td className="px-2.5 py-3">
                           <Badge tone={pay.tone}>
-                            {PAYMENT_METHOD_SHORT[o.payment_method]} · {pay.label}
+                            {PAYMENT_METHOD_SHORT[o.payment_method as keyof typeof PAYMENT_METHOD_SHORT]} · {pay.label}
                           </Badge>
                         </td>
                         <td className="px-2.5 py-3">
