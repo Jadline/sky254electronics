@@ -11,8 +11,9 @@ import { BADGES, MAX_BANNERS, MAX_SLIDER, SHORT_NAME_MAX } from "@/lib/home-rule
 import { isSoldStatus } from "@/lib/inventory";
 import { salePrice } from "@/lib/pricing";
 import { sendCustomerUpdate } from "@/lib/notify";
-import { payOnlineBlocker } from "@/lib/order-labels";
+import { normalisePhone, payOnlineBlocker } from "@/lib/order-labels";
 import { pesapalReady } from "@/lib/pesapal";
+
 import { MAX_PHOTOS, PRODUCTS_BUCKET, type UploadedImage } from "@/lib/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -508,8 +509,9 @@ function afterStatusChange(id: string, before: string, status: string) {
         totalKes: order.total_kes,
         deliveryConfirmed: order.delivery_fee_kes != null,
         token: order.access_token,
+        paymentMethod: order.payment_method,
+        deliveryMethod: order.delivery_method,
         payOnline: pesapalReady() && !payOnlineBlocker(order),
-        cashWhen: order.payment_method === "cash" ? (order.delivery_method === "pickup" ? "when you collect" : "on delivery") : null,
       });
     });
   }
@@ -524,15 +526,13 @@ export async function updateOrder(_: FormState, form: FormData): Promise<FormSta
   const fee = parsePrice(text(form, "delivery_fee_kes"));
   if (fee === undefined) return { error: "Delivery fee must be a whole number of shillings." };
 
-  // "*" so this still works before the coupons migration adds discount_kes.
   const { data: order } = await supabase.from("orders").select("*").eq("id", id).single();
   if (!order) return { error: "That order no longer exists." };
 
   const changes: Record<string, unknown> = {
     status,
     delivery_fee_kes: fee,
-    // Keep any coupon discount when the fee changes.
-    total_kes: order.subtotal_kes - (order.discount_kes ?? 0) + (fee ?? 0),
+    total_kes: order.subtotal_kes + (fee ?? 0),
   };
   // Cash, or M-Pesa sent straight to the shop, is marked by hand. Once Pesapal has taken a
   // payment on the order, that decides it instead, against the (possibly new) total.
@@ -541,11 +541,29 @@ export async function updateOrder(_: FormState, form: FormData): Promise<FormSta
   if (settled.length) {
     const paidKes = settled.reduce((sum, p) => sum + (p.status === "paid" ? (p.paid_kes ?? 0) : 0), 0);
     changes.payment_status = paidKes >= (changes.total_kes as number) ? "paid" : "unpaid";
-  } else if (checked(form, "paid")) changes.payment_status = "paid";
-  // Unticking clears "paid", but keeps a failed online attempt visible.
-  else if (order.payment_status === "paid") changes.payment_status = "unpaid";
+  } else if (checked(form, "paid")) {
+    // Marked paid by hand: record how, and for M-Pesa the confirmation code from the M-Pesa message.
+    const via = text(form, "paid_via");
+    if (!["mpesa", "cash", "other"].includes(via)) return { error: "Please choose how it was paid." };
+    const code = text(form, "payment_reference").toUpperCase().replace(/\s+/g, "");
+    if (via === "mpesa" && !/^[A-Z0-9]{8,12}$/.test(code)) {
+      return { error: "Enter the M-Pesa confirmation code: 8 to 12 letters and numbers, like SKL4X9Q2AB." };
+    }
+    changes.payment_status = "paid";
+    changes.paid_via = via;
+    changes.payment_reference = via === "mpesa" ? code : null;
+    if (order.payment_status !== "paid") changes.paid_at = new Date().toISOString();
+  }
+  // Unticking clears "paid" and its record, but keeps a failed online attempt visible.
+  else if (order.payment_status === "paid") {
+    changes.payment_status = "unpaid";
+    changes.paid_at = null;
+    changes.paid_via = null;
+    changes.payment_reference = null;
+  }
 
   const { error } = await supabase.from("orders").update(changes).eq("id", id);
+  if (error?.code === "23505") return { error: "That M-Pesa code is already recorded on another order. Check the code and try again." };
   if (error) return { error: stockProblem(error) ?? "Couldn't save the order. Please try again." };
   afterStatusChange(id, order.status, status);
   return { message: "Saved." };
@@ -584,6 +602,20 @@ export async function saveShopSettings(_: FormState, form: FormData): Promise<Fo
   const email = optional(form, "email");
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "That email address doesn't look right." };
 
+  const phone = optional(form, "phone");
+  if (phone && !normalisePhone(phone)) return { error: "That phone number doesn't look right. Use a Kenyan number like 0116 236902." };
+  const whatsappRaw = optional(form, "whatsapp");
+  if (whatsappRaw && !normalisePhone(whatsappRaw)) return { error: "That WhatsApp number doesn't look right. Use a Kenyan number like 0116 236902." };
+
+  const till = optional(form, "mpesa_till")?.replace(/\s/g, "") ?? null;
+  if (till && !/^\d{5,8}$/.test(till)) return { error: "The Till number should be 5 to 8 digits." };
+  const paybill = optional(form, "mpesa_paybill")?.replace(/\s/g, "") ?? null;
+  if (paybill && !/^\d{5,8}$/.test(paybill)) return { error: "The Paybill number should be 5 to 8 digits." };
+  const paybillAccount = optional(form, "mpesa_paybill_account");
+  if (paybillAccount && !paybill) return { error: "Enter the Paybill business number that this account number belongs to." };
+  const mpesaPhone = optional(form, "mpesa_phone");
+  if (mpesaPhone && !normalisePhone(mpesaPhone)) return { error: "The Send Money number doesn't look right. Use a Kenyan number like 0712 345 678." };
+
   const links: Record<string, string | null> = {};
   for (const [key, label] of [
     ["facebook_url", "Facebook"],
@@ -599,6 +631,12 @@ export async function saveShopSettings(_: FormState, form: FormData): Promise<Fo
     .from("shop_settings")
     .update({
       email,
+      mpesa_till: till,
+      mpesa_paybill: paybill,
+      mpesa_paybill_account: paybillAccount,
+      mpesa_phone: mpesaPhone,
+      phone,
+      whatsapp: whatsappRaw ? normalisePhone(whatsappRaw) : null,
       address: optional(form, "address"),
       hours: optional(form, "hours"),
       ...links,

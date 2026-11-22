@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { syncPayment } from "@/lib/pesapal";
+import { pesapalEnabled, syncPayment } from "@/lib/pesapal";
 
 /**
  * Pesapal's notification (IPN) that a payment changed. It carries no result, so anyone
@@ -7,6 +7,8 @@ import { syncPayment } from "@/lib/pesapal";
  * Registered as GET; POST is handled too in case it's registered that way by hand.
  */
 async function handle(fields: { OrderTrackingId?: unknown; OrderMerchantReference?: unknown; OrderNotificationType?: unknown }) {
+  // Switched off: don't touch Pesapal at all.
+  if (!pesapalEnabled()) return new Response("Not found", { status: 404 });
   const trackingId = typeof fields.OrderTrackingId === "string" ? fields.OrderTrackingId : "";
   let ok = false;
   if (/^[0-9a-f-]{36}$/i.test(trackingId)) {

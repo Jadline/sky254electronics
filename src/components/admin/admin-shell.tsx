@@ -28,7 +28,6 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     items: [
       { name: "Products", href: "/admin/products" },
       { name: "Categories", href: "/admin/categories" },
-      { name: "Coupons", href: "/admin/coupons" },
       { name: "Reviews", href: "/admin/reviews", badge: "reviews" },
     ],
   },

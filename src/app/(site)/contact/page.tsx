@@ -5,7 +5,8 @@ import { ChatIcon, ClockIcon, MailIcon, MapPinIcon, PhoneIcon, TruckIcon } from 
 import { infoPageMetadata } from "@/components/info-page";
 import { breadcrumbJsonLd, JsonLd } from "@/components/json-ld";
 import { PageHeading } from "@/components/page-heading";
-import { mapEmbedUrl, shopPlace, site, whatsappLink } from "@/config/site";
+import { mapEmbedUrl, shopPlace } from "@/config/site";
+import { shopContact, whatsappUrl } from "@/lib/contact";
 import { getShopSettings } from "@/lib/catalog";
 import { SITE_PAGES } from "@/lib/site-pages";
 
@@ -41,8 +42,9 @@ function HelpCard({ icon, title, text, children }: { icon: ReactNode; title: str
 export default async function ContactPage() {
   const settings = await getShopSettings();
   const { path, title } = SITE_PAGES.contact;
-  const whatsapp = whatsappLink("Hi Sky254!");
-  const tel = `tel:${site.phone.replace(/\s/g, "")}`;
+  const contact = shopContact(settings);
+  const whatsapp = whatsappUrl(contact.whatsapp, "Hi Sky254!");
+  const tel = `tel:${contact.tel}`;
   const place = shopPlace(settings.address);
   const mapQuery = encodeURIComponent(place);
 
@@ -74,7 +76,7 @@ export default async function ContactPage() {
             </DetailColumn>
             <DetailColumn icon={<PhoneIcon className="size-6" />} title="Call or WhatsApp">
               <p>
-                Phone: <a href={tel} className={LINK}>{site.phone}</a>
+                Phone: <a href={tel} className={LINK}>{contact.phone}</a>
               </p>
               {whatsapp && (
                 <p>
@@ -107,7 +109,7 @@ export default async function ContactPage() {
                 title="Sales & product advice"
                 text="Questions about a product, stock or prices."
               >
-                <a href={tel} className={LINK}>{site.phone}</a>
+                <a href={tel} className={LINK}>{contact.phone}</a>
                 {whatsapp && <a href={whatsapp} className={LINK}>Chat on WhatsApp</a>}
               </HelpCard>
               <HelpCard

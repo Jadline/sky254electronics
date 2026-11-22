@@ -1,5 +1,7 @@
 // Wording shared by checkout, the customer's order page and the dashboard.
 
+import { PAYMENT_CHOICES } from "@/lib/payment-options";
+
 /**
  * The kind of delivery an order has. The option's own name (from Delivery in the
  * dashboard) is stored on the order too; these labels are for orders without one.
@@ -29,12 +31,14 @@ export const PAYMENT_STATUSES = {
 export type PaymentStatus = keyof typeof PAYMENT_STATUSES;
 
 /**
- * How an order may be paid. "mpesa" is the stored value for "online before we send it"
- * (couriers); it predates Pesapal, which takes M-Pesa, Airtel Money and cards.
+ * The payment the customer chose at checkout (orders.payment_method): M-Pesa after we confirm,
+ * pay on delivery, pay at the shop, or "Pay now" through Pesapal (only while it's switched on).
  */
 export const PAYMENT_METHODS = {
-  cash: "Pay on delivery or collection",
-  mpesa: "Pay online before we send it",
+  mpesa: PAYMENT_CHOICES.mpesa.title,
+  cash: PAYMENT_CHOICES.cash.title,
+  shop: PAYMENT_CHOICES.shop.title,
+  online: PAYMENT_CHOICES.online.title,
 } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 
@@ -42,14 +46,15 @@ export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 export const ONLINE_PAY_WAYS = "M-Pesa, Airtel Money or card";
 
 /**
- * Why an order can't be paid online yet, or null when it can. The shop confirms every
- * order (and its delivery fee) by phone first, so the customer only pays a final total.
+ * Why an order can't be paid through Pesapal yet, or null when it can. Only orders where the customer
+ * chose "Pay now" are paid this way. They can pay as soon as the total is final, without waiting for
+ * our call, so a delivery order still waiting on its fee has to wait for it.
  */
-export function payOnlineBlocker(o: { status: string; payment_status: string; delivery_method: string; delivery_fee_kes: number | null }) {
+export function payOnlineBlocker(o: { payment_method: string; status: string; payment_status: string; delivery_method: string; delivery_fee_kes: number | null }) {
+  if (o.payment_method !== "online") return "This order isn't set up to pay online.";
   if (o.payment_status === "paid") return "This order is already paid.";
   if (o.status === "cancelled") return "This order was cancelled.";
   if (o.status === "completed") return "This order is already completed. Please call us about payment.";
-  if (o.status === "pending") return "We'll call you to confirm your order first. You can pay here once it's confirmed.";
   if (o.delivery_method !== "pickup" && o.delivery_fee_kes == null) {
     return "We're still working out your delivery fee. You can pay here once it's set.";
   }

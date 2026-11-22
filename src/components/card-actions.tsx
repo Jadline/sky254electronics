@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { whatsappLink } from "@/config/site";
+import { useWhatsappLink } from "@/components/shop-contact";
 import { addToCart, toggleWishlist, useShop } from "@/lib/shop-store";
 import type { Product } from "@/lib/types";
 import { ChatIcon, HeartIcon } from "@/components/icons";
@@ -51,6 +51,7 @@ export function WishlistButton({ product }: { product: Product }) {
 
 /** Panel under a card: appears on hover or keyboard focus, always visible on touch screens. */
 export function CardActions({ product }: { product: Product }) {
+  const whatsappLink = useWhatsappLink();
   const whatsapp = whatsappLink(`Hi Sky254, is the ${product.name} available?`);
   return (
     <div className="absolute inset-x-[-1px] top-full z-10 hidden items-center justify-center gap-2 border border-t-0 border-line bg-white px-3.5 pt-3.5 pb-[18px] shadow-[0_14px_24px_rgba(29,33,40,0.12)] group-focus-within:flex group-hover:flex [@media(hover:none)]:relative [@media(hover:none)]:inset-auto [@media(hover:none)]:flex [@media(hover:none)]:border-0 [@media(hover:none)]:p-0 [@media(hover:none)]:shadow-none max-sm:gap-1.5">

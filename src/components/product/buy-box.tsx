@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { AddToCartButton, WishlistButton } from "@/components/card-actions";
 import { ChatIcon } from "@/components/icons";
-import { whatsappLink } from "@/config/site";
+import { useWhatsappLink } from "@/components/shop-contact";
 import { LOW_STOCK } from "@/lib/inventory";
 import type { Product } from "@/lib/types";
 
 export function BuyBox({ product }: { product: Product }) {
+  const whatsappLink = useWhatsappLink();
   const [qty, setQty] = useState(1);
   const whatsapp = whatsappLink(`Hi Sky254, is the ${product.name} available?`);
   const canBuy = product.inStock && product.priceKes != null;

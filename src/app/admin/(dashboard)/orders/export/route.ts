@@ -1,5 +1,5 @@
 import { getAdmin } from "@/lib/admin-auth";
-import { DELIVERY, ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATE, paymentState, prettyPhone, type DeliveryMethod, type OrderStatus, type PaymentMethod } from "@/lib/admin/orders";
+import { DELIVERY, ORDER_STATUS, PAID_VIA, PAYMENT_METHOD, PAYMENT_STATE, paymentState, prettyPhone, type DeliveryMethod, type OrderStatus, type PaymentMethod } from "@/lib/admin/orders";
 
 // A spreadsheet runs a cell that starts with = + - @ as a formula, so those get a leading quote.
 const cell = (v: string | number) => {
@@ -17,13 +17,13 @@ type Row = {
   customer_phone: string;
   customer_email: string | null;
   delivery_method: DeliveryMethod;
+  delivery_option_name: string | null;
   delivery_address: string | null;
+  paid_via: keyof typeof PAID_VIA | null;
+  payment_reference: string | null;
   subtotal_kes: number;
   delivery_fee_kes: number | null;
   total_kes: number;
-  /** Missing until the coupons migration has been run. */
-  coupon_code?: string | null;
-  discount_kes?: number;
   order_items: { product_name: string; qty: number }[];
 };
 
@@ -35,7 +35,6 @@ export async function GET() {
   const { data, error } = await admin.supabase
     .from("orders")
     .select(
-      // "*" so the export still works before the coupons migration adds its columns.
       "*, order_items(product_name, qty)",
     )
     .order("created_at", { ascending: false })
@@ -43,23 +42,23 @@ export async function GET() {
   if (error) return new Response("Couldn't load the orders.", { status: 500 });
 
   const rows: (string | number)[][] = [
-    ["order_number", "placed", "customer", "phone", "email", "delivery", "address", "items", "subtotal_kes", "coupon", "discount_kes", "delivery_kes", "total_kes", "payment_method", "payment", "status"],
+    ["order_number", "placed", "customer", "phone", "email", "delivery", "address", "items", "subtotal_kes", "delivery_kes", "total_kes", "payment_method", "payment", "paid_via", "mpesa_code", "status"],
     ...(data as unknown as Row[]).map((o) => [
       o.order_number,
       o.created_at,
       o.customer_name,
       prettyPhone(o.customer_phone),
       o.customer_email ?? "",
-      DELIVERY[o.delivery_method]?.label ?? o.delivery_method,
+      o.delivery_option_name ?? DELIVERY[o.delivery_method]?.label ?? o.delivery_method,
       o.delivery_address ?? "",
       o.order_items.map((i) => `${i.qty} x ${i.product_name}`).join("; "),
       o.subtotal_kes,
-      o.coupon_code ?? "",
-      o.discount_kes ?? 0,
       o.delivery_fee_kes ?? "",
       o.total_kes,
       PAYMENT_METHOD[o.payment_method] ?? o.payment_method,
       PAYMENT_STATE[paymentState(o)].label,
+      o.paid_via ? PAID_VIA[o.paid_via] : "",
+      o.payment_reference ?? "",
       ORDER_STATUS[o.status]?.label ?? o.status,
     ]),
   ];

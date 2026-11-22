@@ -22,6 +22,7 @@ type Row = {
   customer_email: string | null;
   delivery_method: DeliveryMethod;
   delivery_fee_kes: number | null;
+  delivery_option_name: string | null;
   total_kes: number;
   created_at: string;
   order_items: { qty: number }[];
@@ -34,7 +35,7 @@ async function Orders({ searchParams }: { searchParams: SearchParams }) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, payment_method, payment_status, customer_name, customer_phone, customer_email, delivery_method, delivery_fee_kes, total_kes, created_at, order_items(qty)",
+      "id, order_number, status, payment_method, payment_status, customer_name, customer_phone, customer_email, delivery_method, delivery_option_name, delivery_fee_kes, total_kes, created_at, order_items(qty)",
     )
     .order("created_at", { ascending: false })
     .limit(2000);
@@ -50,6 +51,8 @@ async function Orders({ searchParams }: { searchParams: SearchParams }) {
     pay: paymentState(o),
     method: o.payment_method,
     delivery: o.delivery_method,
+    deliveryName: o.delivery_option_name ?? "",
+    fee: o.delivery_fee_kes,
     needsFee: needsFee(o),
     placed: o.created_at,
     items: o.order_items.length,

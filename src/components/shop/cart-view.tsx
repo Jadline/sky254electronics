@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { CloseIcon } from "@/components/icons";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
-import { whatsappLink } from "@/config/site";
+import { useWhatsappLink } from "@/components/shop-contact";
 import { clearCart, removeFromCart, setCartQty, useShop } from "@/lib/shop-store";
 import { formatKes, productHref, type Product } from "@/lib/types";
 
 export function CartView({ products }: { products: Product[] }) {
+  const whatsappLink = useWhatsappLink();
   const { cart } = useShop();
 
   // Prices always come from the live catalogue, not from when the item was added.

@@ -5,20 +5,41 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { placeOrder } from "@/app/(site)/checkout/actions";
-import { previewCoupon } from "@/app/(site)/checkout/coupon-actions";
 import { CheckoutSteps } from "@/components/shop/checkout-steps";
 import { choiceFee, findChoice, type DeliveryChoice, type DeliveryChoices } from "@/lib/delivery";
 import { clearCart, useShop } from "@/lib/shop-store";
 import { track } from "@/lib/analytics";
 import { normalisePhone } from "@/lib/order-labels";
+import { describePayTo, paymentOptions, PAYMENT_CHOICES, type PaymentChoice, type PaymentInfo } from "@/lib/payment-options";
 import { formatKes, type Product } from "@/lib/types";
 
 const FIELD =
   "h-11 w-full border border-line bg-white px-3.5 text-sm font-normal outline-none transition-colors focus:border-brand aria-[invalid=true]:border-[#b42318]";
 /** Fields whose errors show under the field itself, not by the Place order button. */
-const INLINE_FIELDS = ["name", "phone", "email", "address"];
+const INLINE_FIELDS = ["name", "phone", "email", "address", "payment"];
 
-export function CheckoutForm({ products, delivery, shopPhone }: { products: Product[]; delivery: DeliveryChoices; shopPhone: string }) {
+/** A line under each payment choice. */
+function paymentDetail(method: PaymentChoice, payment: PaymentInfo) {
+  if (method === "mpesa") {
+    return describePayTo(payment.payTo)
+      ? "Pay straight after you place your order. The till, paybill or number to pay is on the next page."
+      : "Pay straight after you place your order. We'll show you how on the next page.";
+  }
+  if (method === "cash") return "Pay our rider in cash or by M-Pesa when your order arrives. Only when we deliver with our own rider.";
+  if (method === "shop") return "Pay when you come to collect your order.";
+  return "Pay securely by M-Pesa or card on the next page.";
+}
+
+/** What happens after "Place order", for the chosen payment. */
+function paymentNext(method: PaymentChoice | undefined, pickup: boolean) {
+  if (method === "mpesa") return "you'll see how to pay by M-Pesa on the next page, so you can pay right away.";
+  if (method === "cash") return pickup ? "you pay in cash or by M-Pesa when you collect." : "you pay our rider in cash or by M-Pesa on delivery.";
+  if (method === "shop") return "you pay at the shop when you collect.";
+  if (method === "online") return "you'll pay by M-Pesa or card on the next page.";
+  return "we'll agree how you pay.";
+}
+
+export function CheckoutForm({ products, delivery, shopPhone, payment }: { products: Product[]; delivery: DeliveryChoices; shopPhone: string; payment: PaymentInfo }) {
   const router = useRouter();
   const { cart } = useShop();
   const firstChoice = delivery.options[0] ? `option:${delivery.options[0].id}` : delivery.pickupPoints[0] ? `pickup:${delivery.pickupPoints[0].id}` : "";
@@ -26,16 +47,16 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
   // If the picked option is switched off while the page is open, fall back to the first one.
   const selected = findChoice(delivery, picked) ? picked : firstChoice;
   const choice = findChoice(delivery, selected);
+  // The payment choices this delivery allows. If the one picked stops being allowed, the first is used.
+  const [pickedPayment, setPickedPayment] = useState<PaymentChoice>("mpesa");
+  const allowedPayments = paymentOptions(choice, payment.pesapalOn);
+  const paymentMethod = allowedPayments.includes(pickedPayment) ? pickedPayment : allowedPayments[0];
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   // Kept in state so it survives switching to pickup and back, which unmounts the box.
   const [address, setAddress] = useState("");
   const [placed, setPlaced] = useState(false);
   const [pending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
-  const [couponInput, setCouponInput] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; label: string; discountKes: number; forSubtotal: number } | null>(null);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [checkingCoupon, startCouponCheck] = useTransition();
 
   // Totals shown here use live prices. The server recalculates them again when ordering.
   const lines = cart.flatMap((line) => {
@@ -45,14 +66,9 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
       : [];
   });
   const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
-  // A coupon was checked for one subtotal. If the cart changes, it has to be applied again.
-  const activeCoupon = coupon && coupon.forSubtotal === subtotal ? coupon : null;
-  const discount = activeCoupon?.discountKes ?? 0;
-  const payable = subtotal - discount;
-  // Free delivery is judged on what's paid after the coupon, as the server does.
-  const fee = choice ? choiceFee(choice, payable, delivery.freeOver) : null;
+  const fee = choice ? choiceFee(choice, subtotal, delivery.freeOver) : null;
   const feeText = (c: DeliveryChoice) => {
-    const value = choiceFee(c, payable, delivery.freeOver);
+    const value = choiceFee(c, subtotal, delivery.freeOver);
     if (value == null) return "Fee confirmed when we call";
     return value === 0 ? "Free" : formatKes(value);
   };
@@ -78,23 +94,6 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
         </div>
       </div>
     );
-  }
-
-  function applyCoupon() {
-    const code = couponInput.trim();
-    if (!code) return;
-    const phone = (formRef.current?.elements.namedItem("phone") as HTMLInputElement | null)?.value ?? "";
-    setCouponError(null);
-    startCouponCheck(async () => {
-      const result = await previewCoupon(code, subtotal, phone);
-      if (result.ok) {
-        setCoupon({ code: result.code, label: result.label, discountKes: result.discountKes, forSubtotal: subtotal });
-        setCouponInput(result.code);
-      } else {
-        setCoupon(null);
-        setCouponError(result.error);
-      }
-    });
   }
 
   /** Shows an error and, for a field, moves the cursor to it so it's seen on phones too. */
@@ -132,8 +131,7 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
         delivery: selected,
         address: needsAddress ? address : "",
         notes: value("notes"),
-        couponCode: activeCoupon?.code,
-        expectedDiscount: activeCoupon?.discountKes,
+        paymentMethod: paymentMethod ?? "",
         website: value("website"),
       });
       if (result.ok) {
@@ -142,7 +140,7 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
           name: "purchase",
           orderNumber: result.orderNumber,
           // Analytics wants the goods value; delivery goes separately as shipping.
-          valueKes: payable,
+          valueKes: subtotal,
           shippingKes: fee,
           items: lines.map((line) => ({
             id: line.product.slug,
@@ -158,7 +156,6 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
         router.push(`/order/${result.token}`);
       } else {
         fail(result.error, result.field);
-        if (result.field === "coupon") setCoupon(null);
         router.refresh();
       }
     });
@@ -223,6 +220,7 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
             {delivery.options.length > 0 && (
               <div role="radiogroup" aria-label="Delivery" className="flex flex-col gap-2">
                 <span className="text-xs font-medium text-muted uppercase">Delivery</span>
+                <span className="text-xs text-muted">Pay on delivery applies only to deliveries with our own rider.</span>
                 {delivery.options.map((option) => {
                   const value = `option:${option.id}`;
                   return (
@@ -231,7 +229,7 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
                       value={value}
                       selected={selected === value}
                       onSelect={setSelected}
-                      title={option.name}
+                      title={option.ownRider ? `${option.name} (using our rider)` : option.name}
                       detail={[option.areas, option.town].filter(Boolean).join(" · ")}
                       price={feeText({ kind: "option", option })}
                     />
@@ -282,6 +280,32 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
               <textarea name="notes" rows={2} maxLength={500} placeholder="Optional" className={`${FIELD} !h-auto py-2.5`} />
             </label>
           </fieldset>
+
+          <fieldset className="flex min-w-0 flex-col gap-3 border border-line p-6 max-sm:px-4 max-sm:pt-3 max-sm:pb-4">
+            <legend className="px-2 text-[15px] font-medium uppercase">Payment</legend>
+            <div role="radiogroup" aria-label="Payment" className="flex flex-col gap-2">
+              {allowedPayments.map((method) => (
+                <ChoiceRow
+                  key={method}
+                  name="payment"
+                  value={method}
+                  selected={paymentMethod === method}
+                  onSelect={(value) => setPickedPayment(value as PaymentChoice)}
+                  title={method === "cash" && choice?.kind === "pickup" ? "Pay on collection (cash or M-Pesa)" : PAYMENT_CHOICES[method].title}
+                  detail={paymentDetail(method, payment)}
+                  price=""
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              {courier
+                ? "Pay on delivery isn't available with courier delivery, so please pay with M-Pesa."
+                : "Pay on delivery applies only when we deliver with our own rider, or when you pick up."}
+            </p>
+            {error?.field === "payment" && (
+              <p role="alert" className="text-xs text-[#b42318]">{error.message}</p>
+            )}
+          </fieldset>
         </div>
 
         <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-5 border border-line p-6 max-sm:p-4">
@@ -308,22 +332,13 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
               <span className="text-body">Subtotal</span>
               <span className="font-medium">{formatKes(subtotal)}</span>
             </div>
-            {activeCoupon && (
-              <div className="flex justify-between gap-3">
-                <span className="text-body">
-                  Coupon <strong className="font-medium text-text">{activeCoupon.code}</strong>
-                  <span className="block text-xs text-muted">{activeCoupon.label}</span>
-                </span>
-                <span className="font-medium text-[#15803d]">−{formatKes(discount)}</span>
-              </div>
-            )}
             <div className="flex justify-between gap-3">
               <span className="text-body">Delivery</span>
               <span className="text-right text-body">{fee === 0 ? "Free" : fee == null ? "We'll confirm this" : formatKes(fee)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
               <span className="font-medium">Total to pay</span>
-              <span className="text-xl font-medium text-brand">{formatKes(payable + (fee ?? 0))}</span>
+              <span className="text-xl font-medium text-brand">{formatKes(subtotal + (fee ?? 0))}</span>
             </div>
             {fee == null && <p className="text-xs text-muted">Plus delivery, which we&apos;ll confirm when we call you.</p>}
             {fee != null && fee > 0 && delivery.freeOver != null && (
@@ -331,74 +346,14 @@ export function CheckoutForm({ products, delivery, shopPhone }: { products: Prod
             )}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="coupon" className="text-sm font-medium">Coupon code</label>
-            <div className="flex gap-2">
-              <input
-                id="coupon"
-                value={couponInput}
-                onChange={(e) => {
-                  setCouponInput(e.target.value);
-                  setCouponError(null);
-                }}
-                onKeyDown={(e) => {
-                  // Enter applies the code instead of placing the order.
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    applyCoupon();
-                  }
-                }}
-                autoComplete="off"
-                autoCapitalize="characters"
-                maxLength={30}
-                placeholder="Optional"
-                aria-invalid={!!couponError || invalid("coupon")}
-                aria-describedby="coupon-help"
-                className={`${FIELD} min-w-0 flex-1 uppercase placeholder:normal-case`}
-              />
-              {activeCoupon ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCoupon(null);
-                    setCouponInput("");
-                  }}
-                  className="h-11 cursor-pointer border border-line px-4 text-[13px] font-medium uppercase hover:border-brand hover:text-brand"
-                >
-                  Remove
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={applyCoupon}
-                  disabled={checkingCoupon || !couponInput.trim()}
-                  className="h-11 cursor-pointer border border-brand px-4 text-[13px] font-medium text-brand uppercase hover:bg-tint disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {checkingCoupon ? "Checking…" : "Apply"}
-                </button>
-              )}
-            </div>
-            <p id="coupon-help" role={couponError ? "alert" : undefined} className={`text-xs ${couponError ? "text-[#b42318]" : "text-muted"}`}>
-              {couponError ??
-                (coupon && !activeCoupon
-                  ? "Your cart changed. Apply your code again."
-                  : "Coupons apply to the prices shown, including items already on offer.")}
-            </p>
-          </div>
-
           <div className="bg-tint p-4 text-[13px] leading-relaxed">
-            <strong className="font-medium">Payment:</strong> nothing to pay now. We&apos;ll call to confirm your order, then{" "}
-            {courier
-              ? "you pay online by M-Pesa, Airtel Money or card before we send it."
-              : choice?.kind === "pickup"
-                ? "you pay online by M-Pesa, Airtel Money or card, or in cash when you collect."
-                : "you pay online by M-Pesa, Airtel Money or card, or in cash on delivery."}
+            We&apos;ll call you within {payment.confirmMinutes} minutes to confirm your order. After you place it, {paymentNext(paymentMethod, choice?.kind === "pickup")}
           </div>
 
           {error && !INLINE_FIELDS.includes(error.field ?? "") && (
             <p role="alert" className="text-sm text-[#b42318]">{error.message}</p>
           )}
-          <button type="submit" disabled={pending || placed || !choice} className="btn-lift h-11 cursor-pointer rounded-full bg-brand text-[13px] font-medium text-white uppercase disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="submit" disabled={pending || placed || !choice || !paymentMethod} className="btn-lift h-11 cursor-pointer rounded-full bg-brand text-[13px] font-medium text-white uppercase disabled:cursor-not-allowed disabled:opacity-60">
             {pending || placed ? "Placing your order…" : "Place order"}
           </button>
         </div>
@@ -415,7 +370,9 @@ function ChoiceRow({
   title,
   detail,
   price,
+  name = "delivery",
 }: {
+  name?: string;
   value: string;
   selected: boolean;
   onSelect: (value: string) => void;
@@ -425,14 +382,14 @@ function ChoiceRow({
 }) {
   return (
     <label className={`flex cursor-pointer items-start gap-3 border p-3.5 transition-colors ${selected ? "border-brand bg-tint" : "border-line"}`}>
-      <input type="radio" name="delivery" value={value} checked={selected} onChange={() => onSelect(value)} className="mt-0.5 size-4 flex-none accent-brand" />
+      <input type="radio" name={name} value={value} checked={selected} onChange={() => onSelect(value)} className="mt-0.5 size-4 flex-none accent-brand" />
       {/* Phones: the price drops under the name instead of squeezing it into a narrow column. */}
       <span className="flex min-w-0 flex-1 items-start gap-3 max-sm:flex-col max-sm:gap-1">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-sm font-medium">{title}</span>
           {detail && <span className="text-xs text-muted">{detail}</span>}
         </span>
-        <span className="text-right text-xs font-medium whitespace-nowrap max-sm:text-left max-sm:text-brand">{price}</span>
+        {price && <span className="text-right text-xs font-medium whitespace-nowrap max-sm:text-left max-sm:text-brand">{price}</span>}
       </span>
     </label>
   );

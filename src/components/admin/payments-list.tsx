@@ -31,7 +31,7 @@ const STATE: Record<PaymentRow["state"], { label: string; tone: Tone }> = {
   pending: { label: "In progress", tone: "amber" },
   failed: { label: "Failed", tone: "red" },
   reversed: { label: "Reversed", tone: "gray" },
-  due: { label: "Cash to collect", tone: "indigo" },
+  due: { label: "To collect", tone: "indigo" },
 };
 
 type TileKey = "all" | PaymentRow["state"];
@@ -40,7 +40,7 @@ const TILES: { key: TileKey; label: string; icon: typeof CheckIcon | null; bg: s
   { key: "paid", label: "Paid", icon: CheckIcon, bg: "bg-[#e7f6ec]", ink: "text-[#116632]", ring: "border-[#116632]" },
   { key: "pending", label: "Online, not finished", icon: ClockIcon, bg: "bg-[#fef7e6]", ink: "text-[#92400e]", ring: "border-[#d97706]" },
   { key: "failed", label: "Online failed", icon: XCircleIcon, bg: "bg-[#fdecec]", ink: "text-[#b42318]", ring: "border-[#b42318]" },
-  { key: "due", label: "Cash to collect", icon: BanknotesIcon, bg: "bg-adm-lavender", ink: "text-adm-lavender-ink", ring: "border-adm-lavender-ink" },
+  { key: "due", label: "To collect", icon: BanknotesIcon, bg: "bg-adm-lavender", ink: "text-adm-lavender-ink", ring: "border-adm-lavender-ink" },
 ];
 
 export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow[]; initialStatus: string }) {
@@ -107,7 +107,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
             [
               ["all", "All"],
               ["online", "Online"],
-              ["cash", "Cash"],
+              ["cash", "Till, cash & shop"],
             ] as const
           ).map(([k, label]) => (
             <button
@@ -189,7 +189,7 @@ export function PaymentsList({ payments, initialStatus }: { payments: PaymentRow
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap">
                     {p.kind === "cash" ? (
-                      "Cash"
+                      p.via || "Cash"
                     ) : (
                       <span className="flex flex-col leading-snug">
                         <span>Pesapal</span>

@@ -135,7 +135,6 @@ async function Dashboard({ searchParams }: { searchParams: SearchParams }) {
   const allClear = [
     todos.soldOut === 0 && `All ${d.catalogue.visible} products in the shop are in stock.`,
     todos.failedPayments === 0 && "No failed payments.",
-    todos.noPhoto > 0 && `${plural(todos.noPhoto, "product")} still ${todos.noPhoto === 1 ? "has" : "have"} no clean photo.`,
   ].filter(Boolean);
 
   const pcts = d.statuses.map((s) => (d.allOrders ? (s.count / d.allOrders) * 100 : 0));

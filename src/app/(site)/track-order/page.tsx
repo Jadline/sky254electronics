@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { PageHeading } from "@/components/page-heading";
 import { TrackOrderForm } from "@/components/shop/track-order-form";
-import { site, whatsappLink } from "@/config/site";
+import { getShopSettings } from "@/lib/catalog";
+import { shopContact, whatsappUrl } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Track my order",
   description: "Check the progress of your Sky254 Electronics order with your order number and phone number.",
 };
 
-export default function TrackOrderPage() {
-  const whatsapp = whatsappLink("Hi Sky254, I'd like to check on my order.");
+export default async function TrackOrderPage() {
+  const contact = shopContact(await getShopSettings());
+  const whatsapp = whatsappUrl(contact.whatsapp, "Hi Sky254, I'd like to check on my order.");
   return (
     <>
       <PageHeading title="Track my order" />
@@ -26,7 +28,7 @@ export default function TrackOrderPage() {
           </section>
           <aside className="flex min-w-0 flex-[1_1_280px] flex-col gap-2 bg-tint p-6 text-sm">
             <h2 className="text-[15px] font-medium uppercase">Can&apos;t find it?</h2>
-            <p className="text-body">Call us on {site.phone} and we&apos;ll check for you.</p>
+            <p className="text-body">Call us on {contact.phone} and we&apos;ll check for you.</p>
             {whatsapp && (
               <a href={whatsapp} className="font-medium text-brand">
                 Message us on WhatsApp

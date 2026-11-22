@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { site, whatsappLink } from "@/config/site";
-import { getCategories } from "@/lib/catalog";
+import { getCategories, getShopSettings } from "@/lib/catalog";
+import { shopContact, whatsappUrl } from "@/lib/contact";
 import { categoryHref } from "@/lib/types";
 import { HeaderCounts } from "@/components/header-counts";
 import { MobileMenu } from "@/components/mobile-menu";
@@ -17,8 +17,9 @@ const NAV = [
 const CONTAINER = "mx-auto w-full max-w-[1860px] px-6 max-sm:px-4";
 
 export async function SiteHeader() {
-  const categories = await getCategories();
-  const whatsapp = whatsappLink("Hi Sky254, I'd like to ask about a product.");
+  const [categories, settings] = await Promise.all([getCategories(), getShopSettings()]);
+  const contact = shopContact(settings);
+  const whatsapp = whatsappUrl(contact.whatsapp, "Hi Sky254, I'd like to ask about a product.");
   const nav = NAV.filter((item) => categories.some((c) => c.slug === item.slug));
 
   return (
@@ -30,7 +31,7 @@ export async function SiteHeader() {
               Same-day delivery in Nairobi · <span className="text-accent">Pay with M-Pesa</span>
             </span>
             <span className="max-md:hidden">
-              Call / WhatsApp: <span className="text-accent">{site.phone}</span>
+              Call / WhatsApp: <span className="text-accent">{contact.phone}</span>
             </span>
           </div>
           <div className="flex items-center gap-4 max-sm:hidden">
@@ -49,7 +50,7 @@ export async function SiteHeader() {
         <MobileMenu
           main={[{ label: "Home", href: "/" }, { label: "Shop", href: "/shop" }, ...nav.map((item) => ({ label: item.label, href: categoryHref(item.slug) })), { label: "Help & contact", href: "/contact" }]}
           departments={categories.map((category) => ({ label: category.name, href: categoryHref(category.slug) }))}
-          phone={site.phone}
+          phone={contact.phone}
           whatsapp={whatsapp}
         />
         <Link href="/" aria-label="Sky254 home" className="flex items-center gap-1.5 text-3xl leading-none font-bold tracking-tight text-text max-sm:text-[26px]">

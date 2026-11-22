@@ -21,7 +21,7 @@ type OrderRow = {
   id: string;
   created_at: string;
   status: OrderStatus;
-  payment_method: "mpesa" | "cash";
+  payment_method: string;
   payment_status: string;
   customer_phone: string;
   delivery_method: DeliveryMethod;
@@ -36,7 +36,7 @@ export type LatestOrder = {
   customer_name: string;
   created_at: string;
   status: OrderStatus;
-  payment_method: "mpesa" | "cash";
+  payment_method: string;
   payment_status: string;
   total_kes: number;
 };
@@ -118,8 +118,10 @@ export async function loadDashboard(supabase: SupabaseClient, range: RangeKey) {
 
   // How customers pay, in the range. Every order lands in exactly one row.
   const methods = [
-    { key: "mpesa", name: "Online first", note: "Courier orders, paid through Pesapal before sending", color: "#2e9e4f" },
-    { key: "cash", name: "Cash or online", note: "Own rider or pickup: cash, or Pesapal", color: "#f0643c" },
+    { key: "mpesa", name: "M-Pesa", note: "Pay by M-Pesa after we confirm", color: "#2e9e4f" },
+    { key: "cash", name: "On delivery", note: "Cash or M-Pesa to the rider, or on collection", color: "#f0643c" },
+    { key: "shop", name: "At the shop", note: "Pickup orders paid at the shop", color: "#5b4fa8" },
+    { key: "online", name: "Pay now", note: "Online through Pesapal (when switched on)", color: "#0669d6" },
   ].map((m) => ({ ...m, count: inRange.filter((o) => o.payment_method === m.key).length }));
   const paidCount = inRange.filter((o) => o.payment_status === "paid").length;
 
@@ -178,7 +180,6 @@ export async function loadDashboard(supabase: SupabaseClient, range: RangeKey) {
       failedPayments: failed.count ?? 0,
       soldOut: visible.filter((p) => !p.in_stock).length,
       noPrice: visible.filter((p) => p.price_kes == null).length,
-      noPhoto: visible.filter((p) => !p.product_images.some((i) => i.kind === "product")).length,
     },
     catalogue: { products: catalogue.length, visible: visible.length },
     latest: (latest.data ?? []) as LatestOrder[],

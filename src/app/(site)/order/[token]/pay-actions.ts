@@ -25,7 +25,7 @@ export async function payOrder(_: PayState, form: FormData): Promise<PayState> {
   const loadOrder = () =>
     db
       .from("orders")
-      .select("id, order_number, status, payment_status, total_kes, delivery_method, delivery_fee_kes, customer_name, customer_phone, customer_email")
+      .select("id, order_number, status, payment_method, payment_status, total_kes, delivery_method, delivery_fee_kes, customer_name, customer_phone, customer_email")
       .eq("access_token", token)
       .maybeSingle();
   let { data: order } = await loadOrder();

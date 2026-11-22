@@ -37,18 +37,23 @@ export function ReviewsList({ rows }: { rows: ReviewRow[] }) {
   const [tab, setTab] = useState<ReviewRow["status"]>("pending");
   const [page, setPage] = useState(1);
   const [confirming, setConfirming] = useState<string | null>(null);
-  // Which review is being saved, and how, so only that button says "Approving…" etc.
-  const [busy, setBusy] = useState<{ id: string; action: "approved" | "hidden" | "delete" } | null>(null);
+  // Which reviews are being saved, and how, so only that review's buttons are disabled and say "Approving…" etc.
+  const [busy, setBusy] = useState<Record<string, "approved" | "hidden" | "delete">>({});
+  const startBusy = (id: string, action: "approved" | "hidden" | "delete") => setBusy((b) => ({ ...b, [id]: action }));
+  const endBusy = (id: string) =>
+    setBusy((b) => {
+      const { [id]: _done, ...rest } = b;
+      return rest;
+    });
   const status = useAdminAction(setReviewStatus);
   const remove = useAdminAction(deleteReview);
   const notice = remove.notice ?? status.notice;
-  const working = status.pending || remove.pending;
-  const isBusy = (id: string, action: "approved" | "hidden" | "delete") => working && busy?.id === id && busy.action === action;
+  const isBusy = (id: string, action: "approved" | "hidden" | "delete") => busy[id] === action;
 
   async function changeStatus(id: string, next: "approved" | "hidden") {
-    setBusy({ id, action: next });
+    startBusy(id, next);
     await status.run(id, next);
-    setBusy(null);
+    endBusy(id);
   }
 
   const visible = useMemo(() => rows.filter((r) => r.status === tab), [rows, tab]);
@@ -113,25 +118,25 @@ export function ReviewsList({ rows }: { rows: ReviewRow[] }) {
               <p className="text-sm whitespace-pre-wrap text-adm-ink">{r.body}</p>
               <div className="flex flex-wrap gap-2">
                 {r.status !== "approved" && (
-                  <button type="button" disabled={working} aria-busy={isBusy(r.id, "approved")} onClick={() => changeStatus(r.id, "approved")} className={buttonClass.small}>
+                  <button type="button" disabled={r.id in busy} aria-busy={isBusy(r.id, "approved")} onClick={() => changeStatus(r.id, "approved")} className={buttonClass.small}>
                     <CheckIcon className="size-4" aria-hidden /> {isBusy(r.id, "approved") ? "Approving…" : "Approve"}
                   </button>
                 )}
                 {r.status !== "hidden" && (
-                  <button type="button" disabled={working} aria-busy={isBusy(r.id, "hidden")} onClick={() => changeStatus(r.id, "hidden")} className={buttonClass.smallOutline}>
+                  <button type="button" disabled={r.id in busy} aria-busy={isBusy(r.id, "hidden")} onClick={() => changeStatus(r.id, "hidden")} className={buttonClass.smallOutline}>
                     <EyeSlashIcon className="size-4" aria-hidden /> {isBusy(r.id, "hidden") ? "Hiding…" : "Hide"}
                   </button>
                 )}
                 <button
                   type="button"
-                  disabled={working}
+                  disabled={r.id in busy}
                   aria-busy={isBusy(r.id, "delete")}
                   onClick={async () => {
                     if (confirming !== r.id) return setConfirming(r.id);
                     setConfirming(null);
-                    setBusy({ id: r.id, action: "delete" });
+                    startBusy(r.id, "delete");
                     await remove.run(r.id);
-                    setBusy(null);
+                    endBusy(r.id);
                   }}
                   onBlur={() => setConfirming(null)}
                   className={`${buttonClass.smallOutline} text-[#b42318]`}

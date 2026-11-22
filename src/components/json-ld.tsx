@@ -1,4 +1,5 @@
 import { absoluteUrl, site, siteUrl } from "@/config/site";
+import { shopContact } from "@/lib/contact";
 import type { ShopSettings } from "@/lib/settings";
 import type { ReviewSummary } from "@/lib/reviews";
 import { productHref, type Product } from "@/lib/types";
@@ -28,7 +29,7 @@ export function storeJsonLd(settings: ShopSettings) {
     name: site.name,
     url: siteUrl,
     image: absoluteUrl("/opengraph-image"),
-    telephone: site.phone.replace(/\s/g, ""),
+    telephone: shopContact(settings).tel,
     ...(settings.email && { email: settings.email }),
     address: {
       "@type": "PostalAddress",
@@ -39,7 +40,7 @@ export function storeJsonLd(settings: ShopSettings) {
     // Free text from Shop settings, e.g. "Mon–Sat, 8am – 7pm". Google reads it as a hint.
     ...(settings.hours && { openingHours: settings.hours }),
     currenciesAccepted: "KES",
-    paymentAccepted: "M-Pesa, Airtel Money, Credit Card, Cash",
+    paymentAccepted: "M-Pesa, Cash",
     areaServed: { "@type": "Country", name: "Kenya" },
     ...(sameAs.length && { sameAs }),
   };

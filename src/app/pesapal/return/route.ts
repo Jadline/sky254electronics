@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { syncPayment } from "@/lib/pesapal";
+import { pesapalEnabled, syncPayment } from "@/lib/pesapal";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
   const trackingId = params.get("OrderTrackingId") ?? "";
   const reference = params.get("OrderMerchantReference") ?? params.get("ref") ?? "";
   const fallback = NextResponse.redirect(new URL("/track-order", request.url), 303);
+  // Switched off: nothing to check with Pesapal.
+  if (!pesapalEnabled()) return fallback;
 
   const db = createAdminClient();
   const query = db.from("pesapal_payments").select("order_tracking_id, orders(access_token)");

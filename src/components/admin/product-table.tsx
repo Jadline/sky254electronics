@@ -11,7 +11,6 @@ import { paginate, Pager } from "@/components/admin/pager";
 import { RowMenu } from "@/components/admin/row-menu";
 import { SEARCH_BOX, SELECT_PILL } from "@/components/admin/ui";
 import { ActionNotice, useAdminAction, type Notice } from "@/components/admin/use-admin-action";
-import { LOW_STOCK } from "@/lib/inventory";
 import { salePrice, type DiscountType } from "@/lib/pricing";
 
 export type AdminProductRow = {
@@ -46,20 +45,10 @@ const remainingOf = (r: AdminProductRow) => (r.stockQty == null ? null : Math.ma
 const FILTERS = [
   { id: "all", label: "All products", dot: "bg-adm-primary", test: () => true },
   { id: "sold-out", label: "Sold out", dot: "bg-adm-coral", test: (r: AdminProductRow) => !r.inStock },
-  {
-    id: "low-stock",
-    label: "Low stock",
-    dot: "bg-[#f59e0b]",
-    test: (r: AdminProductRow) => {
-      const left = remainingOf(r);
-      return left != null && left > 0 && left <= LOW_STOCK;
-    },
-  },
   { id: "on-sale", label: "On sale", dot: "bg-[#d92d20]", test: (r: AdminProductRow) => saleOf(r) != null },
   { id: "no-price", label: "No price", dot: "bg-[#d97706]", test: (r: AdminProductRow) => r.priceKes == null },
   { id: "hidden", label: "Hidden", dot: "bg-adm-faint", test: (r: AdminProductRow) => !r.isActive },
   { id: "featured", label: "Featured", dot: "bg-adm-lavender-ink", test: (r: AdminProductRow) => r.isFeatured },
-  { id: "no-photo", label: "No clean photo", dot: "bg-adm-teal-ink", test: (r: AdminProductRow) => !r.hasCleanPhoto },
 ] as const;
 
 const SORTS: Record<string, (a: AdminProductRow, b: AdminProductRow) => number> = {
@@ -253,11 +242,11 @@ function StockInput({ row, onNotice }: { row: AdminProductRow; onNotice: (n: Not
   );
 }
 
-/** Stock - Sold, in amber when low and red when nothing remains. */
+/** Stock - Sold, in red when nothing remains. */
 function Remaining({ row }: { row: AdminProductRow }) {
   const left = remainingOf(row);
   if (left == null) return <span className="text-adm-faint">—</span>;
-  const color = left === 0 ? "text-[#b42318]" : left <= LOW_STOCK ? "text-[#b45309]" : "";
+  const color = left === 0 ? "text-[#b42318]" : "";
   return <span className={`font-semibold tabular-nums ${color}`}>{left}</span>;
 }
 
@@ -443,7 +432,6 @@ export function ProductTable({ rows, initialFilter }: { rows: AdminProductRow[];
                           <span className="text-[13px] text-adm-muted">
                             {[r.brand, r.category].filter(Boolean).join(" · ")}
                             {!r.isActive && " · Hidden"}
-                            {!r.hasCleanPhoto && " · No clean photo"}
                           </span>
                         </span>
                       </span>

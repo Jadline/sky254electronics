@@ -13,6 +13,7 @@ import { ServiceList } from "@/components/service-list";
 import { SideTitle } from "@/components/side-title";
 import { site } from "@/config/site";
 import { getCategories, getDelivery, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
+import { shopContact } from "@/lib/contact";
 import { shippingRate } from "@/lib/delivery";
 import { summarise } from "@/lib/reviews";
 import { ProductReviews } from "@/components/product/product-reviews";
@@ -246,7 +247,7 @@ async function ProductDetails({ params }: { params: Params }) {
                         <ReadMore
                           text={
                             product.description ??
-                            `Full details for the ${product.name} are coming soon. Need to know something now? Call or message us on ${site.phone} and we'll help.`
+                            `Full details for the ${product.name} are coming soon. Need to know something now? Call or message us on ${shopContact(settings).phone} and we'll help.`
                           }
                         />
                       </div>
@@ -294,7 +295,7 @@ async function ProductDetails({ params }: { params: Params }) {
                         <h2 className="mb-1 text-base font-medium text-text">Payment</h2>
                         <span>✓ Lipa na M-Pesa</span>
                         <span>✓ Cash on delivery in Nairobi</span>
-                        <span>✓ Questions? Call {site.phone}</span>
+                        <span>✓ Questions? Call {shopContact(settings).phone}</span>
                       </div>
                     </div>
                   ),

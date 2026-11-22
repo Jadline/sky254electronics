@@ -3,6 +3,7 @@
  * Plain values, so server pages and client components can both use them.
  */
 import type { Tone } from "@/components/admin/ui";
+import { PAYMENT_CHOICES } from "@/lib/payment-options";
 import { ORDER_STATUSES, type DeliveryMethod, type OrderStatus, type PaymentMethod, type PaymentStatus } from "@/lib/order-labels";
 
 export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: Tone; color: string }> = {
@@ -33,20 +34,35 @@ export function paymentState(o: { payment_method: string; payment_status: string
   if (o.payment_status === "paid") return "paid";
   if (o.payment_status === "pending") return "pending";
   if (o.payment_status === "failed") return "failed";
-  return o.payment_method === "cash" ? "due" : "unpaid";
+  // Paid at the door or the shop: nothing is chased online, it's simply due then.
+  return o.payment_method === "cash" || o.payment_method === "shop" ? "due" : "unpaid";
 }
 
 export const PAYMENT_STATE: Record<PaymentState, { label: string; tone: Tone }> = {
   paid: { label: "Paid", tone: "green" },
   pending: { label: "In progress", tone: "amber" },
   failed: { label: "Failed", tone: "red" },
-  due: { label: "Due on delivery", tone: "indigo" },
+  due: { label: "Due on delivery or pickup", tone: "indigo" },
   unpaid: { label: "Not paid", tone: "red" },
 };
 
-/** How the order may be paid: couriers are paid online first, other orders online or in cash. */
-export const PAYMENT_METHOD: Record<PaymentMethod, string> = { mpesa: "Online before sending", cash: "Online or cash on delivery" };
-export const PAYMENT_METHOD_SHORT: Record<PaymentMethod, string> = { mpesa: "Online first", cash: "Cash or online" };
+/** The payment the customer chose at checkout. */
+export const PAYMENT_METHOD: Record<PaymentMethod, string> = {
+  mpesa: PAYMENT_CHOICES.mpesa.title,
+  cash: PAYMENT_CHOICES.cash.title,
+  shop: PAYMENT_CHOICES.shop.title,
+  online: PAYMENT_CHOICES.online.title,
+};
+export const PAYMENT_METHOD_SHORT: Record<PaymentMethod, string> = {
+  mpesa: PAYMENT_CHOICES.mpesa.short,
+  cash: PAYMENT_CHOICES.cash.short,
+  shop: PAYMENT_CHOICES.shop.short,
+  online: PAYMENT_CHOICES.online.short,
+};
+
+/** How an order was really paid, recorded when the shop marks it paid (or Pesapal confirms it). */
+export const PAID_VIA = { mpesa: "M-Pesa", cash: "Cash", other: "Other", pesapal: "Pesapal" } as const;
+export type PaidVia = keyof typeof PAID_VIA;
 
 export const DELIVERY: Record<DeliveryMethod, { label: string; short: string; color: string }> = {
   nairobi: { label: "Delivery by our rider", short: "Own rider", color: "#0669d6" },

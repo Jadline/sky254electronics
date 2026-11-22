@@ -7,22 +7,39 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Pesapal sends them back to /pesapal/return and separately notifies /pesapal/ipn. Neither
  * carries the result, so both ask Pesapal for it (syncPayment) before anything is marked paid.
  *
- * Env, all server only: PESAPAL_ENV ("sandbox" or "live"), PESAPAL_CONSUMER_KEY,
- * PESAPAL_CONSUMER_SECRET, SITE_URL, and optionally PESAPAL_IPN_ID.
+ * It is switched off unless PESAPAL_ENABLED=true. While it's off, no Pesapal option shows anywhere
+ * and nothing in this file talks to Pesapal.
+ *
+ * Env, all server only: PESAPAL_ENABLED ("true" to switch on, default off), PESAPAL_ENV
+ * ("sandbox" or "live"), PESAPAL_CONSUMER_KEY, PESAPAL_CONSUMER_SECRET, SITE_URL, and
+ * optionally PESAPAL_IPN_ID (otherwise the site registers its IPN address itself, once).
  */
 
 const HOSTS = { sandbox: "https://cybqa.pesapal.com/pesapalv3", live: "https://pay.pesapal.com/v3" };
 const base = () => (process.env.PESAPAL_ENV === "live" ? HOSTS.live : HOSTS.sandbox);
 const siteUrl = () => (process.env.SITE_URL ?? "").replace(/\/$/, "");
 
-/** True once the keys and the site's address are set. Until then the Pay button stays hidden. */
+/** The feature flag. Off unless PESAPAL_ENABLED is exactly "true" (or "1"). */
+export function pesapalEnabled() {
+  const flag = (process.env.PESAPAL_ENABLED ?? "").trim().toLowerCase();
+  return flag === "true" || flag === "1";
+}
+
+/** True when the flag is on and the keys and the site's address are set. Until then no Pesapal option shows. */
 export function pesapalReady() {
-  return Boolean(process.env.PESAPAL_CONSUMER_KEY && process.env.PESAPAL_CONSUMER_SECRET && siteUrl());
+  return pesapalEnabled() && Boolean(process.env.PESAPAL_CONSUMER_KEY && process.env.PESAPAL_CONSUMER_SECRET && siteUrl());
+}
+
+/** Stops anything here from running while the flag is off, before it can touch Pesapal or the database. */
+function assertEnabled() {
+  if (!pesapalEnabled()) throw new Error("Pesapal is switched off (PESAPAL_ENABLED is not true)");
 }
 
 type PesapalErrorBody = { error_type?: string; type?: string; code?: string; message?: string } | null;
 
 async function call<T>(path: string, options: { method?: "GET" | "POST"; body?: unknown; auth?: boolean; allowError?: boolean } = {}): Promise<T> {
+  // Every request to Pesapal goes through here, so with the flag off none is ever sent.
+  assertEnabled();
   const headers: Record<string, string> = { Accept: "application/json", "Content-Type": "application/json" };
   if (options.auth !== false) headers.Authorization = `Bearer ${await accessToken()}`;
   const response = await fetch(`${base()}${path}`, {
@@ -59,17 +76,27 @@ async function accessToken() {
 // Pesapal needs the id of the registered notification (IPN) address with every payment.
 let ipn: string | null = null;
 
-/** PESAPAL_IPN_ID if set; otherwise finds this site's IPN address, registering it the first time. */
+/**
+ * The notification id Pesapal needs with every payment: PESAPAL_IPN_ID if set, else the one saved
+ * for this site and environment, else it asks Pesapal for this site's address, registering it the
+ * first time, and saves the id so registering happens once.
+ */
 async function ipnId() {
+  assertEnabled();
   if (process.env.PESAPAL_IPN_ID) return process.env.PESAPAL_IPN_ID;
   if (ipn) return ipn;
   const url = `${siteUrl()}/pesapal/ipn`;
+  const env = process.env.PESAPAL_ENV === "live" ? "live" : "sandbox";
+  const db = createAdminClient();
+  const { data: saved } = await db.from("pesapal_ipn").select("ipn_id").eq("env", env).eq("url", url).maybeSingle();
+  if (saved?.ipn_id) return (ipn = saved.ipn_id);
   const list = await call<{ url: string; ipn_id: string }[]>("/api/URLSetup/GetIpnList");
   const found = Array.isArray(list) ? list.find((entry) => entry.url === url) : undefined;
   ipn =
     found?.ipn_id ??
     (await call<{ ipn_id: string }>("/api/URLSetup/RegisterIPN", { method: "POST", body: { url, ipn_notification_type: "GET" } })).ipn_id;
   if (!ipn) throw new Error("Pesapal didn't register the IPN address");
+  await db.from("pesapal_ipn").upsert({ env, url, ipn_id: ipn });
   return ipn;
 }
 
@@ -106,6 +133,7 @@ export async function submitPayment(input: {
   phone: string;
   email: string | null;
 }) {
+  assertEnabled();
   const data = await call<{ order_tracking_id: string; redirect_url: string }>("/api/Transactions/SubmitOrderRequest", {
     method: "POST",
     body: {
@@ -144,6 +172,7 @@ const STATUS: Record<number, "paid" | "failed" | "reversed"> = { 1: "paid", 2: "
  * order's id, or null when the payment isn't one of ours. Throws when Pesapal can't be reached.
  */
 export async function syncPayment(trackingId: string) {
+  assertEnabled();
   const db = createAdminClient();
   const { data: payment } = await db
     .from("pesapal_payments")
@@ -199,7 +228,11 @@ export async function settleOrder(orderId: string) {
   else if (payments.some((p) => p.status === "paid" || p.status === "reversed")) next = "unpaid";
   else if (payments[0]?.status === "failed" && next !== "paid") next = "failed";
 
-  if (next !== order.payment_status) await db.from("orders").update({ payment_status: next }).eq("id", orderId);
+  if (next !== order.payment_status) {
+    // When Pesapal settles an order, note when and how it was paid (a manual record is left alone).
+    const paidNow = next === "paid" ? { paid_at: new Date().toISOString(), paid_via: "pesapal" } : {};
+    await db.from("orders").update({ payment_status: next, ...paidNow }).eq("id", orderId);
+  }
   // The customer's open order page updates at once; the dashboard refreshes on its own.
   announce(orderTopic(orderId));
 }

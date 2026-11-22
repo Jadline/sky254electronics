@@ -3,10 +3,11 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { after } from "next/server";
 import { getDelivery } from "@/lib/catalog";
-import { checkCoupon } from "@/lib/coupon-check";
 import { choiceFee, choiceMethod, choiceName, findChoice } from "@/lib/delivery";
 import { sendCustomerUpdate, sendOrderAlert } from "@/lib/notify";
 import { normalisePhone } from "@/lib/order-labels";
+import { paymentOptions, type PaymentChoice } from "@/lib/payment-options";
+import { pesapalReady } from "@/lib/pesapal";
 import { salePrice } from "@/lib/pricing";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -21,9 +22,8 @@ export type CheckoutInput = {
   delivery: string;
   address: string;
   notes: string;
-  /** A coupon code, if the customer applied one, and the discount they were shown for it. */
-  couponCode?: string;
-  expectedDiscount?: number;
+  /** How they'll pay: "mpesa", "cash", "shop" or "online" (only while Pesapal is switched on). */
+  paymentMethod: string;
   /** A hidden field people never fill in, to catch simple bots. */
   website: string;
 };
@@ -67,8 +67,12 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   if (needsAddress && address.length < 3) {
     return { ok: false, error: "Please tell us where to deliver.", field: "address" };
   }
-  // The shop's own rider can take cash; a courier is paid by M-Pesa before it's sent.
-  const paymentMethod = choice.kind === "option" && !choice.option.ownRider ? "mpesa" : "cash";
+  // Only a payment choice this delivery allows can be picked. "Pay now" exists only while Pesapal is on.
+  const allowedPayments = paymentOptions(choice, pesapalReady());
+  const paymentMethod = clean(input.paymentMethod, 20) as PaymentChoice;
+  if (!allowedPayments.includes(paymentMethod)) {
+    return { ok: false, error: "Please choose how you'd like to pay.", field: "payment" };
+  }
   const notes = clean(input.notes, 500);
 
   // Combine repeated lines and check quantities.
@@ -136,24 +140,8 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
     return { ok: false, error: "A price in your cart has changed. Please check the new total and try again." };
   }
 
-  // A coupon is checked again here, against the real prices and its use limits.
-  let discount = 0;
-  let couponCode: string | null = null;
-  const rawCoupon = clean(input.couponCode, 40);
-  if (rawCoupon) {
-    const coupon = await checkCoupon(rawCoupon, subtotal, phone);
-    if (!coupon.ok) return { ok: false, error: coupon.error, field: "coupon" };
-    if (coupon.discountKes !== input.expectedDiscount) {
-      return { ok: false, error: "Your coupon's discount has changed. Please check the new total and try again.", field: "coupon" };
-    }
-    discount = coupon.discountKes;
-    couponCode = coupon.code;
-  }
-  const payable = subtotal - discount;
-
   // The fee comes from the chosen option. null means the shop confirms it when they call.
-  // Free delivery is judged on what's paid after the coupon, so a code can't unlock it.
-  const fee = choiceFee(choice, payable, delivery.freeOver);
+  const fee = choiceFee(choice, subtotal, delivery.freeOver);
   const deliveryAddress = needsAddress ? address : null;
   const token = randomBytes(24).toString("base64url");
   let order: { id: string; order_number: string } | null = null;
@@ -175,9 +163,7 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
         notes: notes || null,
         subtotal_kes: subtotal,
         delivery_fee_kes: fee,
-        total_kes: payable + (fee ?? 0),
-        // Only sent with a coupon, so checkout still works before the coupons migration is run.
-        ...(couponCode && { coupon_code: couponCode, discount_kes: discount }),
+        total_kes: subtotal + (fee ?? 0),
       })
       .select("id, order_number")
       .single();
@@ -205,8 +191,6 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       deliveryAddress,
       notes: notes || null,
       subtotalKes: subtotal,
-      discountKes: discount,
-      couponCode,
       deliveryFeeKes: fee,
       adminUrl: `${process.env.SITE_URL ?? ""}/admin/orders/${placed.id}`,
       items: lines.map((line) => ({ name: line.product_name, qty: line.qty, lineTotalKes: line.line_total_kes })),
@@ -220,9 +204,11 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
       orderNumber: placed.order_number,
       customerName: name,
       customerEmail: email || null,
-      totalKes: payable + (fee ?? 0),
+      totalKes: subtotal + (fee ?? 0),
       deliveryConfirmed: fee != null,
       token,
+      paymentMethod,
+      deliveryMethod,
     }),
   );
 

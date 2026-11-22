@@ -7,13 +7,13 @@ import { useMemo, useState } from "react";
 import { setOrderStatus } from "@/app/admin/actions";
 import { paginate, Pager } from "@/components/admin/pager";
 import { RowMenu } from "@/components/admin/row-menu";
+import { paymentShort } from "@/lib/payment-options";
 import { Badge, formatDate, formatTime, initials, ksh, SEARCH_BOX } from "@/components/admin/ui";
 import { ActionNotice, useAdminAction } from "@/components/admin/use-admin-action";
 import {
   DELIVERY,
   nextStatus,
   ORDER_STATUS,
-  PAYMENT_METHOD_SHORT,
   PAYMENT_STATE,
   prettyPhone,
   type DeliveryMethod,
@@ -32,6 +32,10 @@ export type OrderRow = {
   pay: PaymentState;
   method: PaymentMethod;
   delivery: DeliveryMethod;
+  /** The option or pickup point they chose, e.g. "Nairobi CBD". */
+  deliveryName: string;
+  /** null = still to be set. */
+  fee: number | null;
   needsFee: boolean;
   placed: string;
   items: number;
@@ -201,7 +205,7 @@ export function OrdersList({ orders, initialStatus, initialQuery }: { orders: Or
                         <Badge tone={pay.tone} dot>
                           {pay.label}
                         </Badge>
-                        <span className="text-[13px] text-adm-muted">{PAYMENT_METHOD_SHORT[o.method]}</span>
+                        <span className="text-[13px] text-adm-muted">{paymentShort(o.method, o.delivery)}</span>
                       </span>
                     </td>
                     <td className="px-3 py-3">
@@ -209,8 +213,12 @@ export function OrdersList({ orders, initialStatus, initialQuery }: { orders: Or
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">
                       <span className="flex flex-col leading-snug">
-                        <span>{DELIVERY[o.delivery].short}</span>
-                        {o.needsFee && <span className="text-[13px] font-medium text-adm-peach-ink">Fee not set</span>}
+                        <span>{o.deliveryName || DELIVERY[o.delivery].short}</span>
+                        {o.needsFee ? (
+                          <span className="text-[13px] font-medium text-adm-peach-ink">Fee not set</span>
+                        ) : (
+                          <span className="text-[13px] text-adm-muted">{o.fee ? ksh(o.fee) : "Free"}</span>
+                        )}
                       </span>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap">

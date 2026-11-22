@@ -1,5 +1,7 @@
-// Fixed shop details used around the site. Email, address, hours, social links and
+// Fixed shop details used around the site. Phone, WhatsApp, email, address, hours, social links and
 // delivery fees are edited in the dashboard under Shop settings (lib/catalog.ts: getShopSettings).
+// The phone and WhatsApp here are only the starting values, used until the shop saves its own
+// (see lib/contact.ts).
 export const site = {
   name: "Sky254 Electronics",
   phone: "+254 116 236902",
@@ -24,8 +26,3 @@ export const siteUrl = (process.env.SITE_URL || "http://localhost:3000").replace
 /** An absolute link to a path on this site, e.g. absoluteUrl("/shop"). */
 export const absoluteUrl = (path: string) => (/^https?:\/\//.test(path) ? path : `${siteUrl}${path.startsWith("/") ? "" : "/"}${path}`);
 
-export function whatsappLink(message: string) {
-  return site.whatsapp
-    ? `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`
-    : null;
-}

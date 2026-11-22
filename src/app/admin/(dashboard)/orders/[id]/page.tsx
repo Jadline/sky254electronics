@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import {
   DELIVERY,
   ORDER_STATUS,
+  PAID_VIA,
   PAYMENT_METHOD,
   PAYMENT_STATE,
   paymentState,
@@ -18,6 +19,7 @@ import {
   type OrderStatus,
   type PaymentMethod,
 } from "@/lib/admin/orders";
+import { paymentTitle } from "@/lib/payment-options";
 
 export const metadata: Metadata = { title: "Order" };
 
@@ -94,7 +96,14 @@ async function OrderDetail({ params }: { params: Params }) {
       };
     }),
   ];
-  if (payMethod === "cash" && order.payment_status === "paid") activity.push({ title: "Cash received", text: `${ksh(order.total_kes)} marked as paid` });
+  // A payment the shop recorded by hand (Pesapal payments are listed above).
+  if (order.payment_status === "paid" && order.paid_via && order.paid_via !== "pesapal") {
+    activity.push({
+      title: "Marked as paid",
+      text: `${ksh(order.total_kes)} by ${PAID_VIA[order.paid_via as keyof typeof PAID_VIA] ?? order.paid_via}${order.payment_reference ? ` · M-Pesa code ${order.payment_reference}` : ""}`,
+      when: order.paid_at ?? undefined,
+    });
+  }
   if (status !== "pending") {
     activity.push({
       title: status === "completed" && isPickup ? "Collected" : st.label,
@@ -185,14 +194,6 @@ async function OrderDetail({ params }: { params: Params }) {
               <dd className="text-right">{plural(items.reduce((t, i) => t + i.qty, 0), "unit")}</dd>
               <dt className="text-adm-muted">Subtotal</dt>
               <dd className="text-right">{ksh(order.subtotal_kes)}</dd>
-              {order.discount_kes > 0 && (
-                <>
-                  <dt className="text-adm-muted">
-                    Coupon <span className="font-mono font-semibold text-adm-ink">{order.coupon_code}</span>
-                  </dt>
-                  <dd className="text-right text-[#116632]">−{ksh(order.discount_kes)}</dd>
-                </>
-              )}
               <dt className="text-adm-muted">{isPickup ? "Pickup" : "Delivery"}</dt>
               <dd className="text-right">
                 {order.delivery_fee_kes == null ? (
@@ -245,12 +246,60 @@ async function OrderDetail({ params }: { params: Params }) {
             status={status}
             delivery={method}
             deliveryFee={order.delivery_fee_kes}
-            subtotal={order.subtotal_kes - (order.discount_kes ?? 0)}
+            subtotal={order.subtotal_kes}
             isCash={payMethod === "cash"}
             canMarkPaid={!payments.some((p) => p.status === "paid" || p.status === "reversed")}
             isPaid={order.payment_status === "paid"}
+            paidVia={order.paid_via}
+            paymentReference={order.payment_reference ?? order.payment_claim_code}
             paymentLabel={`${PAYMENT_METHOD[payMethod]} · ${pay.label}`}
           />
+
+          <section aria-labelledby="dp-h" className={`${card} flex flex-col gap-3 px-5 py-[18px]`}>
+            <h2 id="dp-h" className="text-lg font-semibold">
+              Delivery and payment
+            </h2>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              <dt className="text-adm-muted">{isPickup ? "Pickup" : "Delivery"}</dt>
+              <dd className="text-right font-medium">{order.delivery_option_name ?? DELIVERY[method].label}</dd>
+              {order.delivery_address && (
+                <>
+                  <dt className="text-adm-muted">Address</dt>
+                  <dd className="text-right">{order.delivery_address}</dd>
+                </>
+              )}
+              <dt className="text-adm-muted">Fee</dt>
+              <dd className="text-right font-medium">
+                {order.delivery_fee_kes == null ? (isPickup ? "Free" : <span className="text-adm-peach-ink">Not set yet</span>) : order.delivery_fee_kes === 0 ? "Free" : ksh(order.delivery_fee_kes)}
+              </dd>
+              <dt className="text-adm-muted">Payment</dt>
+              <dd className="text-right font-medium">{paymentTitle(payMethod, method)}</dd>
+              <dt className="text-adm-muted">Status</dt>
+              <dd className="text-right">
+                <Badge tone={pay.tone} dot>
+                  {pay.label}
+                </Badge>
+              </dd>
+              {order.payment_status !== "paid" && order.payment_claim_code && (
+                <>
+                  <dt className="text-adm-muted">Customer&apos;s M-Pesa code</dt>
+                  <dd className="text-right">
+                    <span className="font-mono text-[13px] font-semibold">{order.payment_claim_code}</span>
+                    <span className="block text-[13px] text-adm-muted">Check it in M-Pesa, then tick Paid</span>
+                  </dd>
+                </>
+              )}
+              {order.payment_status === "paid" && order.paid_via && (
+                <>
+                  <dt className="text-adm-muted">Paid by</dt>
+                  <dd className="text-right">
+                    {PAID_VIA[order.paid_via as keyof typeof PAID_VIA] ?? order.paid_via}
+                    {order.payment_reference && <span className="block font-mono text-[13px] text-adm-muted">{order.payment_reference}</span>}
+                  </dd>
+                </>
+              )}
+            </dl>
+          </section>
 
           <section aria-labelledby="cust-h" className={`${card} flex flex-col gap-3.5 px-5 py-[18px]`}>
             <h2 id="cust-h" className="text-lg font-semibold">

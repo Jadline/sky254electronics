@@ -5,7 +5,7 @@ import { ProductTabs } from "@/components/home/product-tabs";
 import { ChevronRightIcon } from "@/components/icons";
 import { ProductCard, ProductCardMini, ProductCardRow } from "@/components/product-card";
 import { ServiceList } from "@/components/service-list";
-import { site } from "@/config/site";
+import { shopContact } from "@/lib/contact";
 import { getCategories, getProducts, getReviews, getShopSettings } from "@/lib/catalog";
 import { Stars } from "@/components/product/stars";
 import { categoryHref, formatKes, priceText, productHref, type Product } from "@/lib/types";
@@ -296,7 +296,7 @@ export default async function Home() {
             <span className="text-xs text-brand">Nairobi</span>
             <strong className="text-[15px] leading-snug font-medium">Come see it in the box before you buy</strong>
             <span className="text-[13px] leading-relaxed text-muted">
-              {[settings.address, settings.hours].filter(Boolean).join(" · ") || `Call ${site.phone} for directions`}
+              {[settings.address, settings.hours].filter(Boolean).join(" · ") || `Call ${shopContact(settings).phone} for directions`}
             </span>
           </div>
         </aside>

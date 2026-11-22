@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { site, whatsappLink } from "@/config/site";
+import { site } from "@/config/site";
 import { getCategories, getShopSettings } from "@/lib/catalog";
+import { shopContact, whatsappUrl } from "@/lib/contact";
 import { categoryHref } from "@/lib/types";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { ChatIcon, ChevronUpIcon } from "@/components/icons";
@@ -43,7 +44,8 @@ export async function SiteFooter() {
     },
     ...COLUMNS,
   ];
-  const whatsapp = whatsappLink("Hi Sky254!");
+  const contact = shopContact(settings);
+  const whatsapp = whatsappUrl(contact.whatsapp, "Hi Sky254!");
   const social = [
     { label: "Facebook", href: settings.social.facebook, text: "f" },
     { label: "Instagram", href: settings.social.instagram, text: "ig" },
@@ -65,7 +67,7 @@ export async function SiteFooter() {
             </span>
           </span>
           <span>{settings.address ? `${settings.address}, Nairobi, Kenya` : "Nairobi, Kenya"}</span>
-          <span>Phone / WhatsApp: {site.phone}</span>
+          <span>Phone / WhatsApp: {contact.phone}</span>
           {settings.email && (
             <span>
               Email:{" "}

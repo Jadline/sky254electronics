@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { breadcrumbJsonLd, JsonLd } from "@/components/json-ld";
 import { PageHeading } from "@/components/page-heading";
-import { mapEmbedUrl, shopPlace, site, whatsappLink } from "@/config/site";
+import { mapEmbedUrl, shopPlace, site } from "@/config/site";
+import { shopContact, whatsappUrl } from "@/lib/contact";
 import { getProducts, getShopSettings } from "@/lib/catalog";
 import { SITE_PAGES } from "@/lib/site-pages";
 
@@ -37,8 +38,9 @@ export async function AboutPage() {
   const brands = [...brandCounts].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
 
   const place = shopPlace(settings.address);
-  const whatsapp = whatsappLink("Hi Sky254!");
-  const tel = `tel:${site.phone.replace(/\s/g, "")}`;
+  const contact = shopContact(settings);
+  const whatsapp = whatsappUrl(contact.whatsapp, "Hi Sky254!");
+  const tel = `tel:${contact.tel}`;
 
   return (
     <>
@@ -120,7 +122,7 @@ export async function AboutPage() {
             <div className="flex flex-col gap-1.5">
               <h3 className="mb-1.5 text-xl font-medium text-text">Call or WhatsApp</h3>
               <p className="text-[15px] text-body">
-                Phone: <a href={tel} className="hover:text-brand">{site.phone}</a>
+                Phone: <a href={tel} className="hover:text-brand">{contact.phone}</a>
               </p>
               {whatsapp && (
                 <p className="text-[15px] text-body">
